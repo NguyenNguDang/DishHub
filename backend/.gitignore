@@ -1,0 +1,75 @@
+HELP.md
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build and compilation
+target/
+build/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+*.code-workspace
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+.c9/
+
+# IDE General
+*.launch
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Logs
+logs/
+*.log
+*.log.gz
+*.log.*
+
+# Database
+*.db
+*.sqlite
+*.sql
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+.temp
+.tmp
