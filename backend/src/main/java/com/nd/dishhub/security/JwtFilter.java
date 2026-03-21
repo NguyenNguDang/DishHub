@@ -29,6 +29,14 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
         
+        String requestURI = request.getRequestURI();
+        
+        // Skip JWT validation cho public endpoints
+        if (isPublicEndpoint(requestURI)) {
+            chain.doFilter(request, response);
+            return;
+        }
+        
         final String authHeader = request.getHeader("Authorization");
         
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -50,5 +58,26 @@ public class JwtFilter extends OncePerRequestFilter {
             }
         }
         chain.doFilter(request, response);
+    }
+    
+    /**
+     * Kiểm tra xem request có phải public endpoint không
+     */
+    private boolean isPublicEndpoint(String requestURI) {
+        String[] publicEndpoints = {
+                "/v3/api-docs",
+                "/swagger-ui",
+                "/swagger-resources",
+                "/api/v1/auth",
+                "/api/v1/ingredients",
+                "/error"
+        };
+        
+        for (String endpoint : publicEndpoints) {
+            if (requestURI.startsWith(endpoint)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -29,10 +29,17 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // Swagger & API Docs
                         .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/swagger-resources/**").permitAll()
+                        // Public API endpoints
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        // Ingredients endpoints - match both /api/v1/ingredients and /api/v1/ingredients/**
+                        .requestMatchers("/api/v1/ingredients", "/api/v1/ingredients/**").permitAll()
+                        .requestMatchers("/error").permitAll()
+                        // All other requests need authentication
                         .anyRequest().authenticated()
                 )
+                .anonymous(anonymous -> anonymous.authorities("ROLE_ANONYMOUS"))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         
         return http.build();
