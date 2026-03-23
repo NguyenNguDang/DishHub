@@ -20,6 +20,11 @@ public interface RecipeRepository extends JpaRepository<RecipeEntity, Long> {
     List<RecipeEntity> findByUserId(Long userId);
 
     /**
+     * Tìm recipes theo user ID với pagination
+     */
+    Page<RecipeEntity> findByUserId(Long userId, Pageable pageable);
+
+    /**
      * Tìm public recipes
      */
     Page<RecipeEntity> findByIsPublicTrue(Pageable pageable);
