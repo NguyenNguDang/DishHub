@@ -35,6 +35,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         // Ingredients endpoints - match both /api/v1/ingredients and /api/v1/ingredients/**
                         .requestMatchers("/api/v1/ingredients", "/api/v1/ingredients/**").permitAll()
+                        // User endpoints - require authentication
+                        .requestMatchers("/api/v1/users/**").authenticated()
                         .requestMatchers("/error").permitAll()
                         // All other requests need authentication
                         .anyRequest().authenticated()
