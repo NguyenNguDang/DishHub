@@ -24,6 +24,8 @@ public class RecipeResponse {
 
     private Long parentId;
 
+    private NutritionResponse nutrition;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
