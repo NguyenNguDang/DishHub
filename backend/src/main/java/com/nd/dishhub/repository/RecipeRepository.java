@@ -98,5 +98,10 @@ public interface RecipeRepository extends JpaRepository<RecipeEntity, Long> {
            "HAVING AVG(CAST(rev.rating AS DOUBLE)) >= :minRating " +
            "ORDER BY AVG(CAST(rev.rating AS DOUBLE)) DESC")
     Page<RecipeEntity> findRecipesByAverageRating(@Param("minRating") Double minRating, Pageable pageable);
-}
 
+    /**
+     * Tìm recipes private của user (custom recipes)
+     */
+    @Query("SELECT r FROM RecipeEntity r WHERE r.user.id = :userId AND r.isPublic = false")
+    Page<RecipeEntity> findPrivateRecipesByUser(@Param("userId") Long userId, Pageable pageable);
+}

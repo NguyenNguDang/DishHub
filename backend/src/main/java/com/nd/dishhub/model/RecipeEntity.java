@@ -63,5 +63,16 @@ public class RecipeEntity extends AbstractEntity<Long> {
     
     @OneToMany(mappedBy = "recipe")
     private Set<ReviewEntity> reviews = new HashSet<>();
-}
 
+    @Column(name = "total_calories", nullable = true)
+    private Double totalCalories;
+
+    @Column(name = "total_protein", nullable = true)
+    private Double totalProtein;
+
+    @Column(name = "total_fat", nullable = true)
+    private Double totalFat;
+
+    @Column(name = "total_carbs", nullable = true)
+    private Double totalCarbs;
+}

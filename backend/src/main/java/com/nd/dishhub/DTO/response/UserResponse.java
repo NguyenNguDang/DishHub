@@ -10,21 +10,23 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RecipeResponse {
+public class UserResponse {
 
     private Long id;
 
-    private String title;
+    private String firstName;
 
-    private String instructions;
+    private String lastName;
 
-    private Boolean isPublic;
+    private int age;
 
-    private Long userId;
+    private float weight;
 
-    private Long parentId;
+    private float height;
 
-    private NutritionResponse nutrition;
+    private String email;
+
+    private boolean isActive;
 
     private LocalDateTime createdAt;
 
