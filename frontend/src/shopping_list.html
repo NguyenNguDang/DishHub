@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Shopping List - FoodieApp</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f27f0d",
+                        "background-light": "#f8f7f5",
+                        "background-dark": "#221910",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="max-w-[1200px] mx-auto min-h-screen flex flex-col bg-white dark:bg-slate-900 shadow-sm">
+<header class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4 sticky top-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md z-10">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined">restaurant_menu</span>
+</div>
+<div>
+<h2 class="text-xl font-bold leading-tight tracking-tight">FoodieApp</h2>
+<p class="text-xs text-slate-500 dark:text-slate-400">Your kitchen companion</p>
+</div>
+</div>
+<nav class="hidden md:flex items-center gap-6">
+<a class="flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-primary font-medium transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">home</span>
+<span>Home</span>
+</a>
+<a class="flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-primary font-medium transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">skillet</span>
+<span>Recipes</span>
+</a>
+<a class="flex items-center gap-2 text-primary font-bold transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px] fill-1">shopping_basket</span>
+<span>Shopping List</span>
+</a>
+</nav>
+<div class="flex items-center gap-3">
+<button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border-2 border-white dark:border-slate-900"></span>
+</button>
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20">
+<img class="w-full h-full object-cover" data-alt="User profile picture showing a smiling person" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_REd6cQgRzQrZbqYhWlIbohD-Wg_SOa_lxzUWmcqIBk2udydRbSzIv_Z07Gqi6-KGtjsHMfbExQ0DhkrRjFJoEB45eYEOQYw6eGghPQ4PiHPjUVWu9gJlKLTYer2IJ_3_8k7odHvc_QSz9cf-VkT3oEJdrLrLQmmeSIQlpgLh2eUw0OFDhxvMbW9EbfhTvTWng_5S3lMb8awmNx85i_-OkWiUfSOSS8OS63ljUdWwgwrCyUHoaRY8KloFR-lwKHEk0Qc3FIy3iu1I"/>
+</div>
+</div>
+</header>
+<main class="flex-grow p-6">
+<div class="max-w-4xl mx-auto">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+<div>
+<h1 class="text-3xl font-extrabold tracking-tight mb-2">Shopping List</h1>
+<p class="text-slate-500 dark:text-slate-400">Weekly ingredients for your saved meal plan</p>
+</div>
+<div class="bg-primary/5 dark:bg-primary/10 p-4 rounded-xl border border-primary/10 flex flex-col gap-2 min-w-[320px]">
+<label class="text-xs font-bold uppercase tracking-wider text-primary">Select Week</label>
+<div class="flex items-center justify-between gap-4">
+<button class="p-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<div class="flex flex-col items-center">
+<span class="font-bold text-slate-800 dark:text-slate-100">Oct 23 — Oct 29, 2023</span>
+<span class="text-[11px] text-slate-500">12 recipes planned</span>
+</div>
+<button class="p-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<div class="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+<button class="bg-primary text-white px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px]">list_alt</span>
+                        All Items
+                    </button>
+<button class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px] align-middle mr-1">check_circle</span>
+                        Completed
+                    </button>
+<button class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px] align-middle mr-1">share</span>
+                        Share List
+                    </button>
+<button class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px] align-middle mr-1">print</span>
+                        Print
+                    </button>
+</div>
+<div class="space-y-8">
+<section>
+<div class="flex items-center gap-2 mb-4 border-b border-slate-100 dark:border-slate-800 pb-2">
+<span class="material-symbols-outlined text-primary">eco</span>
+<h3 class="text-lg font-bold">Produce</h3>
+<span class="ml-auto text-xs font-semibold bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-500">5 items</span>
+</div>
+<div class="space-y-3">
+<label class="flex items-center p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer group transition-colors">
+<input class="w-5 h-5 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary" type="checkbox"/>
+<span class="ml-4 font-medium flex-grow">Baby Spinach</span>
+<span class="text-slate-500 dark:text-slate-400 text-sm font-semibold">500</span>
+<span class="ml-1 text-slate-400 text-sm uppercase">g</span>
+</label>
+<label class="flex items-center p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer group transition-colors">
+<input class="w-5 h-5 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary" type="checkbox"/>
+<span class="ml-4 font-medium flex-grow">Red Bell Peppers</span>
+<span class="text-slate-500 dark:text-slate-400 text-sm font-semibold">3</span>
+<span class="ml-1 text-slate-400 text-sm uppercase">units</span>
+</label>
+<label class="flex items-center p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer group transition-colors">
+<input checked="" class="w-5 h-5 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary opacity-50" type="checkbox"/>
+<span class="ml-4 font-medium flex-grow text-slate-400 line-through">Garlic Bulbs</span>
+<span class="text-slate-400 text-sm font-semibold">2</span>
+<span class="ml-1 text-slate-400 text-sm uppercase">units</span>
+</label>
+<label class="flex items-center p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer group transition-colors">
+<input class="w-5 h-5 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary" type="checkbox"/>
+<span class="ml-4 font-medium flex-grow">Sweet Potatoes</span>
+<span class="text-slate-500 dark:text-slate-400 text-sm font-semibold">1.5</span>
+<span class="ml-1 text-slate-400 text-sm uppercase">kg</span>
+</label>
+<label class="flex items-center p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer group transition-colors">
+<input class="w-5 h-5 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary" type="checkbox"/>
+<span class="ml-4 font-medium flex-grow">Red Onions</span>
+<span class="text-slate-500 dark:text-slate-400 text-sm font-semibold">4</span>
+<span class="ml-1 text-slate-400 text-sm uppercase">units</span>
+</label>
+</div>
+</section>
+<section>
+<div class="flex items-center gap-2 mb-4 border-b border-slate-100 dark:border-slate-800 pb-2">
+<span class="material-symbols-outlined text-primary">set_meal</span>
+<h3 class="text-lg font-bold">Meat &amp; Seafood</h3>
+<span class="ml-auto text-xs font-semibold bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-500">3 items</span>
+</div>
+<div class="space-y-3">
+<label class="flex items-center p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer group transition-colors">
+<input class="w-5 h-5 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary" type="checkbox"/>
+<span class="ml-4 font-medium flex-grow">Chicken Breast</span>
+<span class="text-slate-500 dark:text-slate-400 text-sm font-semibold">800</span>
+<span class="ml-1 text-slate-400 text-sm uppercase">g</span>
+</label>
+<label class="flex items-center p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer group transition-colors">
+<input class="w-5 h-5 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary" type="checkbox"/>
+<span class="ml-4 font-medium flex-grow">Atlantic Salmon Fillets</span>
+<span class="text-slate-500 dark:text-slate-400 text-sm font-semibold">2</span>
+<span class="ml-1 text-slate-400 text-sm uppercase">units</span>
+</label>
+<label class="flex items-center p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer group transition-colors">
+<input class="w-5 h-5 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary" type="checkbox"/>
+<span class="ml-4 font-medium flex-grow">Lean Ground Beef</span>
+<span class="text-slate-500 dark:text-slate-400 text-sm font-semibold">1</span>
+<span class="ml-1 text-slate-400 text-sm uppercase">lb</span>
+</label>
+</div>
+</section>
+<section>
+<div class="flex items-center gap-2 mb-4 border-b border-slate-100 dark:border-slate-800 pb-2">
+<span class="material-symbols-outlined text-primary">egg</span>
+<h3 class="text-lg font-bold">Dairy &amp; Eggs</h3>
+<span class="ml-auto text-xs font-semibold bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-500">2 items</span>
+</div>
+<div class="space-y-3">
+<label class="flex items-center p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer group transition-colors">
+<input class="w-5 h-5 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary" type="checkbox"/>
+<span class="ml-4 font-medium flex-grow">Organic Large Eggs</span>
+<span class="text-slate-500 dark:text-slate-400 text-sm font-semibold">1</span>
+<span class="ml-1 text-slate-400 text-sm uppercase">dozen</span>
+</label>
+<label class="flex items-center p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer group transition-colors">
+<input checked="" class="w-5 h-5 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary opacity-50" type="checkbox"/>
+<span class="ml-4 font-medium flex-grow text-slate-400 line-through">Greek Yogurt</span>
+<span class="text-slate-400 text-sm font-semibold">500</span>
+<span class="ml-1 text-slate-400 text-sm uppercase">ml</span>
+</label>
+</div>
+</section>
+<section>
+<div class="flex items-center gap-2 mb-4 border-b border-slate-100 dark:border-slate-800 pb-2">
+<span class="material-symbols-outlined text-primary">inventory_2</span>
+<h3 class="text-lg font-bold">Pantry</h3>
+<span class="ml-auto text-xs font-semibold bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-500">4 items</span>
+</div>
+<div class="space-y-3">
+<label class="flex items-center p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer group transition-colors">
+<input class="w-5 h-5 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary" type="checkbox"/>
+<span class="ml-4 font-medium flex-grow">Extra Virgin Olive Oil</span>
+<span class="text-slate-500 dark:text-slate-400 text-sm font-semibold">250</span>
+<span class="ml-1 text-slate-400 text-sm uppercase">ml</span>
+</label>
+<label class="flex items-center p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer group transition-colors">
+<input class="w-5 h-5 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary" type="checkbox"/>
+<span class="ml-4 font-medium flex-grow">Quinoa</span>
+<span class="text-slate-500 dark:text-slate-400 text-sm font-semibold">2</span>
+<span class="ml-1 text-slate-400 text-sm uppercase">cups</span>
+</label>
+<label class="flex items-center p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer group transition-colors">
+<input class="w-5 h-5 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary" type="checkbox"/>
+<span class="ml-4 font-medium flex-grow">Canned Chickpeas</span>
+<span class="text-slate-500 dark:text-slate-400 text-sm font-semibold">2</span>
+<span class="ml-1 text-slate-400 text-sm uppercase">tins</span>
+</label>
+<label class="flex items-center p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer group transition-colors">
+<input class="w-5 h-5 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary" type="checkbox"/>
+<span class="ml-4 font-medium flex-grow">Balsamic Vinegar</span>
+<span class="text-slate-500 dark:text-slate-400 text-sm font-semibold">1</span>
+<span class="ml-1 text-slate-400 text-sm uppercase">btl</span>
+</label>
+</div>
+</section>
+</div>
+</div>
+</main>
+<footer class="bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 py-10 px-6 mt-12">
+<div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+<div class="flex items-center gap-3 opacity-60">
+<div class="w-8 h-8 bg-slate-400 rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-sm">restaurant_menu</span>
+</div>
+<span class="font-bold text-slate-500 dark:text-slate-400">FoodieApp</span>
+</div>
+<div class="flex gap-8">
+<a class="text-sm text-slate-500 hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="text-sm text-slate-500 hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="text-sm text-slate-500 hover:text-primary transition-colors" href="#">Help Center</a>
+</div>
+<div class="flex gap-4">
+<a class="w-10 h-10 rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-center text-slate-400 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]">public</span>
+</a>
+<a class="w-10 h-10 rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-center text-slate-400 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]">smartphone</span>
+</a>
+</div>
+</div>
+<div class="text-center mt-8">
+<p class="text-[11px] text-slate-400 uppercase tracking-widest">© 2023 FoodieApp Inc. All rights reserved.</p>
+</div>
+</footer>
+<div class="md:hidden fixed bottom-6 right-6">
+<button class="w-14 h-14 bg-primary text-white rounded-full shadow-lg shadow-primary/40 flex items-center justify-center">
+<span class="material-symbols-outlined text-[28px]">add</span>
+</button>
+</div>
+</div>
+</body></html>

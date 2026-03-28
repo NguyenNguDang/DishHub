@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Glazed Miso Salmon Bowl - FoodieApp</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f27f0d",
+                        "background-light": "#f8f7f5",
+                        "background-dark": "#221910",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100">
+<div class="relative flex min-h-screen flex-col">
+<!-- Navigation Bar -->
+<header class="sticky top-0 z-50 w-full border-b border-primary/10 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md">
+<div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+<div class="flex items-center gap-2">
+<div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white">
+<span class="material-symbols-outlined text-xl">restaurant</span>
+</div>
+<h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">FoodieApp</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300">
+<span class="material-symbols-outlined">favorite</span>
+</button>
+<button class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300">
+<span class="material-symbols-outlined">share</span>
+</button>
+<div class="h-10 w-10 overflow-hidden rounded-full border-2 border-primary/20 bg-slate-200" data-alt="User profile avatar photo">
+<img alt="Profile" class="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhzin0mhRfIfHXVtP19gvjQnGHTyEYzalGQAhZCgRwqY3cgcNqgXAnj5wkZZXLUd3N--u0StRRkHbtfy5VQHRDBS9tcz0PDv6coPAvZxz6tgUn3mtZg1PSHWkHd63u0zdguv7jpRhDBc-6tdWFPT_EGYxhkAjtEYf_KXf_qOaCCQ_Ao2LEWZzqWzCsm2Y6372WTuSC65SdmxZdZ00YWjqsYUxriI39XCXTkNCWH7ap9VJnhJ-E1cyzvbEh9iGYhQRnGDH5QcAxNkhl"/>
+</div>
+</div>
+</div>
+</header>
+<main class="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+<!-- Hero Section -->
+<div class="relative mb-8 overflow-hidden rounded-xl bg-slate-200 shadow-xl lg:h-[450px]" data-alt="Close up of a glazed miso salmon bowl with rice and greens">
+<div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent z-10"></div>
+<img alt="Glazed Miso Salmon Bowl" class="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-CghtB1y1E_dWOWoQ9I6xPEnbCg0iRii97DYSN-PUZhpQ4czT2-Z_nasBdjDOtfvlXyg809vbNAeMIM9EIBGve7drI9XlT3mHYME0kMRlhQ2iEUq4jBAjWj_38RFcxBV5F8f1NKkP_7ftCTUIwTtOnrlyn30KU6ZgL-juKVMKyVadVR78NNMcUvzZRkG3pmx2koQ1FWXq8j_qZ0WCM2enZ2OBZS2Xw7jA3LkzFR8_5TCZijxOnbmpB9AuYpxIwgvS7o_K9tBXNodr"/>
+<div class="absolute bottom-0 left-0 z-20 w-full p-6 md:p-10">
+<div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+<div>
+<nav class="mb-2 flex gap-2 text-sm font-medium text-white/80">
+<span class="rounded bg-primary px-2 py-0.5 text-xs text-white">Main Course</span>
+<span class="rounded bg-white/20 px-2 py-0.5 text-xs backdrop-blur-sm">Japanese Fusion</span>
+</nav>
+<h2 class="text-3xl font-extrabold text-white md:text-5xl">Glazed Miso Salmon Bowl</h2>
+</div>
+<div class="flex flex-wrap gap-3">
+<button class="flex items-center gap-2 rounded-lg bg-primary px-6 py-3 font-bold text-white shadow-lg transition-transform hover:scale-105 active:scale-95">
+<span class="material-symbols-outlined">calendar_today</span>
+                                Add to Meal Plan
+                            </button>
+<button class="flex items-center gap-2 rounded-lg border-2 border-white bg-white/10 px-6 py-3 font-bold text-white backdrop-blur-md transition-all hover:bg-white hover:text-primary">
+<span class="material-symbols-outlined">fork_right</span>
+                                Fork Recipe
+                            </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Recipe Meta and Visibility Toggle -->
+<div class="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-primary/10 bg-white p-4 shadow-sm dark:bg-slate-900">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">schedule</span>
+<div>
+<p class="text-xs uppercase tracking-wider text-slate-500">Prep Time</p>
+<p class="font-bold">25 Mins</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">bar_chart</span>
+<div>
+<p class="text-xs uppercase tracking-wider text-slate-500">Difficulty</p>
+<p class="font-bold">Intermediate</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">group</span>
+<div>
+<p class="text-xs uppercase tracking-wider text-slate-500">Servings</p>
+<p class="font-bold">2 People</p>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3 border-l border-slate-200 pl-4 dark:border-slate-800">
+<div class="text-right">
+<p class="text-sm font-bold text-slate-900 dark:text-white">Recipe Visibility</p>
+<p class="text-xs text-slate-500">Public visibility enabled</p>
+</div>
+<label class="relative inline-flex cursor-pointer items-center">
+<input checked="" class="peer sr-only" type="checkbox"/>
+<div class="peer h-7 w-12 rounded-full bg-slate-200 after:absolute after:left-[4px] after:top-[4px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full dark:bg-slate-700"></div>
+</label>
+</div>
+</div>
+<div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+<!-- Left Column: Ingredients & Instructions -->
+<div class="lg:col-span-2 space-y-8">
+<!-- Ingredients -->
+<section class="rounded-xl bg-white p-6 shadow-sm dark:bg-slate-900 md:p-8">
+<h3 class="mb-6 flex items-center gap-2 text-2xl font-bold">
+<span class="material-symbols-outlined text-primary">shopping_basket</span>
+                            Ingredients
+                        </h3>
+<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+<div class="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-primary/5 dark:border-slate-800">
+<input class="h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary" type="checkbox"/>
+<span class="text-slate-700 dark:text-slate-300">2 Fresh Salmon Fillets (6oz each)</span>
+</div>
+<div class="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-primary/5 dark:border-slate-800">
+<input class="h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary" type="checkbox"/>
+<span class="text-slate-700 dark:text-slate-300">2 tbsp White Miso Paste</span>
+</div>
+<div class="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-primary/5 dark:border-slate-800">
+<input class="h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary" type="checkbox"/>
+<span class="text-slate-700 dark:text-slate-300">1 tbsp Mirin</span>
+</div>
+<div class="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-primary/5 dark:border-slate-800">
+<input class="h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary" type="checkbox"/>
+<span class="text-slate-700 dark:text-slate-300">1 tbsp Honey or Maple Syrup</span>
+</div>
+<div class="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-primary/5 dark:border-slate-800">
+<input class="h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary" type="checkbox"/>
+<span class="text-slate-700 dark:text-slate-300">1 cup Jasmine Rice</span>
+</div>
+<div class="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-primary/5 dark:border-slate-800">
+<input class="h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary" type="checkbox"/>
+<span class="text-slate-700 dark:text-slate-300">1 cup Steamed Bok Choy</span>
+</div>
+<div class="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-primary/5 dark:border-slate-800">
+<input class="h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary" type="checkbox"/>
+<span class="text-slate-700 dark:text-slate-300">1 tsp Sesame Seeds</span>
+</div>
+<div class="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-primary/5 dark:border-slate-800">
+<input class="h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary" type="checkbox"/>
+<span class="text-slate-700 dark:text-slate-300">Green onions, thinly sliced</span>
+</div>
+</div>
+</section>
+<!-- Instructions -->
+<section class="rounded-xl bg-white p-6 shadow-sm dark:bg-slate-900 md:p-8">
+<h3 class="mb-6 flex items-center gap-2 text-2xl font-bold">
+<span class="material-symbols-outlined text-primary">list_alt</span>
+                            Instructions
+                        </h3>
+<div class="space-y-8">
+<div class="flex gap-4">
+<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary font-bold text-white">1</div>
+<div class="space-y-2">
+<h4 class="text-lg font-bold">Prepare the Glaze</h4>
+<p class="leading-relaxed text-slate-600 dark:text-slate-400">In a small bowl, whisk together the miso paste, mirin, honey, and a splash of soy sauce until smooth. If the miso is too thick, add a teaspoon of warm water.</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary font-bold text-white">2</div>
+<div class="space-y-2">
+<h4 class="text-lg font-bold">Marinate Salmon</h4>
+<p class="leading-relaxed text-slate-600 dark:text-slate-400">Pat the salmon fillets dry. Brush the glaze generously over the top and sides of the salmon. Let it marinate for at least 15 minutes at room temperature.</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary font-bold text-white">3</div>
+<div class="space-y-2">
+<h4 class="text-lg font-bold">Cook the Salmon</h4>
+<p class="leading-relaxed text-slate-600 dark:text-slate-400">Preheat your oven to 400°F (200°C). Place salmon on a parchment-lined baking sheet and bake for 12-15 minutes, or until the salmon flakes easily with a fork and the glaze is caramelized.</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary font-bold text-white">4</div>
+<div class="space-y-2">
+<h4 class="text-lg font-bold">Assemble the Bowl</h4>
+<p class="leading-relaxed text-slate-600 dark:text-slate-400">Divide the cooked jasmine rice between two bowls. Top with the salmon and steamed bok choy. Garnish with sesame seeds and green onions.</p>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Sidebar -->
+<aside class="space-y-8">
+<!-- Nutritional Facts -->
+<section class="rounded-xl bg-white p-6 shadow-sm dark:bg-slate-900">
+<h3 class="mb-4 text-xl font-bold">Nutritional Facts</h3>
+<p class="mb-6 text-sm text-slate-500">Approximate values per serving</p>
+<div class="grid grid-cols-2 gap-4">
+<div class="rounded-lg bg-primary/5 p-4 text-center">
+<p class="text-2xl font-bold text-primary">540</p>
+<p class="text-xs font-medium uppercase tracking-wider text-slate-500">Calories</p>
+</div>
+<div class="rounded-lg bg-slate-50 p-4 text-center dark:bg-slate-800">
+<p class="text-2xl font-bold text-slate-900 dark:text-white">34g</p>
+<p class="text-xs font-medium uppercase tracking-wider text-slate-500">Protein</p>
+</div>
+<div class="rounded-lg bg-slate-50 p-4 text-center dark:bg-slate-800">
+<p class="text-2xl font-bold text-slate-900 dark:text-white">22g</p>
+<p class="text-xs font-medium uppercase tracking-wider text-slate-500">Fat</p>
+</div>
+<div class="rounded-lg bg-slate-50 p-4 text-center dark:bg-slate-800">
+<p class="text-2xl font-bold text-slate-900 dark:text-white">48g</p>
+<p class="text-xs font-medium uppercase tracking-wider text-slate-500">Carbs</p>
+</div>
+</div>
+</section>
+<!-- Tags/Categories -->
+<section class="rounded-xl bg-white p-6 shadow-sm dark:bg-slate-900">
+<h3 class="mb-4 text-xl font-bold">Tags</h3>
+<div class="flex flex-wrap gap-2">
+<span class="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">#HighProtein</span>
+<span class="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">#Dinner</span>
+<span class="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">#Omega3</span>
+<span class="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">#Japanese</span>
+</div>
+</section>
+</aside>
+</div>
+<!-- Bottom Section: Comments & Reviews -->
+<section class="mt-12 rounded-xl bg-white p-6 shadow-sm dark:bg-slate-900 md:p-8">
+<div class="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+<div>
+<h3 class="text-2xl font-bold">Ratings &amp; Comments</h3>
+<div class="mt-1 flex items-center gap-2">
+<div class="flex text-primary">
+<span class="material-symbols-outlined fill-1">star</span>
+<span class="material-symbols-outlined fill-1">star</span>
+<span class="material-symbols-outlined fill-1">star</span>
+<span class="material-symbols-outlined fill-1">star</span>
+<span class="material-symbols-outlined">star_half</span>
+</div>
+<span class="font-bold">4.8</span>
+<span class="text-slate-500">(124 reviews)</span>
+</div>
+</div>
+<button class="rounded-lg bg-primary/10 px-6 py-2 font-bold text-primary transition-colors hover:bg-primary/20">Write a Review</button>
+</div>
+<!-- Comment Input -->
+<div class="mb-10 flex gap-4">
+<div class="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-slate-200" data-alt="Default user avatar placeholder">
+<img alt="Avatar" class="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDaqZnI7ZKICUU7AwJBNelcaDHBhAyyJW_aJUCW3j2JIFc9HkH68lSUjOPRSnE7MYoxiWzyDWz5ZvHGr17xCQD0JI5IuWyKADrGM0gkEK7ki3M3YkI0ybm2GTWJnlCxZy1dddgFe0nWVUxr4ilaqdyILhbmyySWfmwgwYLDJmY_LLC3KNAyz_JwPCoPYCWQ3cHUql1kPQVR6Kcv3xQa4Bskr8W7DfECh9IJqz7A4m6Xk1XYdk_izDosaZZVzNVOsU6T9lE17IP7wJcY"/>
+</div>
+<div class="flex-1">
+<textarea class="w-full rounded-xl border-slate-200 bg-slate-50 p-4 focus:border-primary focus:ring-primary dark:border-slate-800 dark:bg-slate-800 dark:text-white" placeholder="Share your experience making this recipe..." rows="3"></textarea>
+<div class="mt-2 flex justify-end">
+<button class="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white shadow-md">Post Comment</button>
+</div>
+</div>
+</div>
+<!-- Review List -->
+<div class="space-y-8">
+<div class="flex gap-4 border-b border-slate-100 pb-8 dark:border-slate-800">
+<div class="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-slate-200" data-alt="Portrait of a female home cook">
+<img alt="Sarah" class="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCE3XbRk1dMAYf_IkyAYD1W4PZhz8MJPraAVp670DlzS2enbytbQlraUNt0i5wulv9hgGtt5ou8Q3lh4GYUAf82-gG7QovTK7CoA5xVRBArAh5k4lTFkU-XNIE1IwJH47W--iKEHiheoOXU7C1Ysc8P0k5JluYpsp5qvBQr05Z0pls5drDQhTY1E1aWomD1Ry9957jFSkcAo6jnhuwtRIFRXunhSYB5OTu4xGgHuve-QfVmMaH2yGHF34F1TOq_ByPrEdArf9JUVjc1"/>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<h4 class="font-bold">Sarah Jenkins</h4>
+<span class="text-sm text-slate-500">2 days ago</span>
+</div>
+<div class="flex text-primary text-xs">
+<span class="material-symbols-outlined text-[16px] fill-1">star</span>
+<span class="material-symbols-outlined text-[16px] fill-1">star</span>
+<span class="material-symbols-outlined text-[16px] fill-1">star</span>
+<span class="material-symbols-outlined text-[16px] fill-1">star</span>
+<span class="material-symbols-outlined text-[16px] fill-1">star</span>
+</div>
+<p class="mt-2 text-slate-600 dark:text-slate-400">The glaze is absolutely divine! I didn't have mirin so I used a bit of rice vinegar and honey instead, turned out great. Definitely adding this to our weekly rotation.</p>
+</div>
+</div>
+<div class="flex gap-4 border-b border-slate-100 pb-8 dark:border-slate-800">
+<div class="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-slate-200" data-alt="Portrait of a male chef">
+<img alt="Marcus" class="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBREO9MqBEAht4Rzaq8akDjEnvHH9Y-2x9hSOLdGKKa5Dj752bvwICB_02exet82RpVqYzbYBpMwPuc6N-dBZ2_NPE907LIT5G7t_Q5LJOWRdAWtxcNRSzN99Q84vcA_OpInOAvBee4j3Q7R2n4GULmp1wxJrPgvaIEX0i19H3cPADy4CiMRegQW13WvQrajYCYKqSW001Cy2o3uQAnuhe8C5VuVRL1Cfj3mc2LyMejZufeD8HyqJrQUUlbgSmvaTI1rpIP4fZHyVgx"/>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<h4 class="font-bold">Marcus Wong</h4>
+<span class="text-sm text-slate-500">1 week ago</span>
+</div>
+<div class="flex text-primary text-xs">
+<span class="material-symbols-outlined text-[16px] fill-1">star</span>
+<span class="material-symbols-outlined text-[16px] fill-1">star</span>
+<span class="material-symbols-outlined text-[16px] fill-1">star</span>
+<span class="material-symbols-outlined text-[16px] fill-1">star</span>
+<span class="material-symbols-outlined text-[16px]">star</span>
+</div>
+<p class="mt-2 text-slate-600 dark:text-slate-400">Excellent recipe. I broiled the salmon for the last 2 minutes to get that perfect char on the miso glaze. Make sure not to overcook the salmon!</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<footer class="mt-12 bg-white px-4 py-8 dark:bg-background-dark">
+<div class="mx-auto max-w-7xl text-center">
+<div class="flex items-center justify-center gap-2 mb-4">
+<div class="flex h-6 w-6 items-center justify-center rounded bg-primary text-white">
+<span class="material-symbols-outlined text-sm">restaurant</span>
+</div>
+<span class="font-bold text-slate-900 dark:text-white">FoodieApp</span>
+</div>
+<p class="text-sm text-slate-500">© 2024 FoodieApp Inc. All rights reserved.</p>
+<div class="mt-4 flex justify-center gap-6 text-sm font-medium text-slate-500">
+<a class="hover:text-primary" href="#">About</a>
+<a class="hover:text-primary" href="#">Recipes</a>
+<a class="hover:text-primary" href="#">Privacy Policy</a>
+<a class="hover:text-primary" href="#">Contact</a>
+</div>
+</div>
+</footer>
+</div>
+</body></html>

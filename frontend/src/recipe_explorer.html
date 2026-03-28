@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Recipe Explorer - FoodieApp</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f27f0d",
+                        "background-light": "#f8f7f5",
+                        "background-dark": "#221910",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<div class="layout-container flex h-full grow flex-col">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-primary/10 bg-white dark:bg-slate-900 px-6 lg:px-40 py-3 sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<div class="size-8 text-primary">
+<svg fill="currentColor" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M24 4H6V17.3333V30.6667H24V44H42V30.6667V17.3333H24V4Z" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-xl font-bold leading-tight tracking-tight">FoodieApp</h2>
+</div>
+<div class="flex flex-1 justify-end gap-4 items-center">
+<nav class="hidden md:flex gap-6 mr-8">
+<a class="text-primary font-semibold" href="#">Explore</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors" href="#">Recipes</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors" href="#">Community</a>
+</nav>
+<button class="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border-2 border-primary/20" data-alt="User profile avatar photo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDRhkI-UWvCwOI-q07wsOL1oN_PNXWB0FcfalNAypuUlsZmhvIHdrP_Wwzn5JtHJAf-8RDHlWHEP1s7yDaJjr-sQysEUC8cFW8IE4x-gJjZICjMWb0vneZFaqoa-GxTy-I9kfkRQWrL6lSeeqMP0hb5TpP9RlmQKvLH9_we3_6eYSWmRWiQN27Qx6qx3jKfRQIZFVUGVFM44Eu7BpWPjNLzQidf00lO_hhI9behBdPJjN1B38o3hiWryOAkl7h5hkgngr4qqa6KOU9T");'></div>
+</div>
+</header>
+<main class="flex flex-col flex-1 px-6 lg:px-40 py-8 gap-8">
+<section class="flex flex-col gap-6">
+<div class="flex flex-col gap-2">
+<h1 class="text-3xl font-extrabold tracking-tight">Discover your next meal</h1>
+<p class="text-slate-500 dark:text-slate-400">Search over 50,000 professional recipes</p>
+</div>
+<div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+<div class="flex-1 w-full">
+<label class="flex flex-col w-full h-14">
+<div class="flex w-full flex-1 items-stretch rounded-xl h-full shadow-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus-within:border-primary transition-all">
+<div class="text-slate-400 flex items-center justify-center pl-4">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="form-input flex w-full border-none bg-transparent focus:ring-0 placeholder:text-slate-400 px-4 text-base" placeholder="Search recipes, cuisines, or chefs" value=""/>
+<button class="m-1 px-6 rounded-lg bg-primary text-white font-bold text-sm hover:bg-primary/90 transition-colors">Search</button>
+</div>
+</label>
+</div>
+</div>
+<div class="flex flex-col md:flex-row gap-4">
+<div class="flex-1 bg-primary/5 rounded-xl p-6 border border-primary/10">
+<h3 class="font-bold text-primary mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-xl">auto_awesome</span>
+                                Smart Suggestion
+                            </h3>
+<p class="text-xs text-slate-500 mb-3">What's in your fridge? Type ingredients to get ideas.</p>
+<div class="flex gap-2">
+<input class="flex-1 rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-primary focus:border-primary" placeholder="e.g. tomato, eggs, spinach" type="text"/>
+<button class="px-4 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg text-sm font-bold">Find</button>
+</div>
+</div>
+<div class="md:w-64 bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+<div class="flex justify-between items-center mb-4">
+<p class="text-sm font-bold">Max Calories</p>
+<span class="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">850 kcal</span>
+</div>
+<div class="relative h-2 w-full bg-slate-100 dark:bg-slate-700 rounded-full">
+<div class="absolute h-full w-[70%] bg-primary rounded-full"></div>
+<div class="absolute top-1/2 left-[70%] -translate-y-1/2 size-4 bg-white border-2 border-primary rounded-full shadow-sm cursor-pointer"></div>
+</div>
+<div class="flex justify-between mt-2 text-[10px] text-slate-400 uppercase font-bold tracking-wider">
+<span>100 kcal</span>
+<span>1500 kcal</span>
+</div>
+</div>
+</div>
+<div class="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+<button class="flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-white px-5 text-sm font-bold transition-all shadow-md shadow-primary/20">
+<span class="material-symbols-outlined text-lg">explore</span> All
+                        </button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-5 text-sm font-medium hover:border-primary transition-all">
+                            Breakfast
+                        </button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-5 text-sm font-medium hover:border-primary transition-all">
+                            Vegan
+                        </button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-5 text-sm font-medium hover:border-primary transition-all">
+                            Quick &amp; Easy
+                        </button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-5 text-sm font-medium hover:border-primary transition-all">
+                            Gluten-Free
+                        </button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-5 text-sm font-medium hover:border-primary transition-all">
+                            Desserts
+                        </button>
+</div>
+</section>
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+<div class="group flex flex-col bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:shadow-xl hover:shadow-primary/5 transition-all">
+<div class="relative aspect-[4/3] w-full overflow-hidden">
+<div class="absolute inset-0 bg-center bg-cover transition-transform duration-500 group-hover:scale-105" data-alt="Delicious fresh salad bowl with avocado" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDSwvx3IjUgYFS3lrR7TlG2zXcxXUd6sFH2Tbe9PjUQ99fIGE5G7Dv-WOXhR3oBGse6arBhVKNaJT47dyqMKY3fY65qAZNOJmVcUStPcynqplldypFaF_AgL6YA2cIyT_aryYZQwxeLtHAs9qGrWgs4L_eDLVErDctRmoxkNHCWrz96PzQsYjkSOlFKR9ZMW5Y1N8Zz_Ku59GC59gTgak5cV3feCpElmyPz81b0B6qjQTRnMatCshR44nMTZy4sytQWJCbqpjuvPzSY");'></div>
+<div class="absolute top-3 right-3">
+<button class="size-9 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-xl">favorite</span>
+</button>
+</div>
+<div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-primary text-sm fill-1">star</span>
+<span class="text-xs font-bold">4.8</span>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-lg leading-tight group-hover:text-primary transition-colors">Spring Avocado &amp; Berry Salad</h3>
+<span class="text-primary font-bold text-sm bg-primary/10 px-2 py-0.5 rounded">320 kcal</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-center bg-cover" data-alt="Chef Maria Garcia portrait" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBrLHrAzAIL9jXbLMNGWdv2hAK7bmEQxOo29vBx82Tjn_CWD-IWUzVRniCPeAoX7V64a4H7PgyDDQYE6FBYLjOXS47jxsGM4sjwnyTwNFZKaWd00R237czyyCt-1tAuizc6y9-xyRbs_VBjJo0GztpjlmlFoXIwUXcQa1tgubqmFg8XIzXzNEjTX6cxIIV-TKW6wX60GtCV17gS_0Qu0mOm7iI8z77CzMRbZM7H99XYiQxnMzqj66asfSHhBDEuLInOQ-RqEQSA6AWz");'></div>
+<p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Maria Garcia</p>
+</div>
+</div>
+</div>
+<div class="group flex flex-col bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:shadow-xl hover:shadow-primary/5 transition-all">
+<div class="relative aspect-[4/3] w-full overflow-hidden">
+<div class="absolute inset-0 bg-center bg-cover transition-transform duration-500 group-hover:scale-105" data-alt="Vegan poke bowl with colorful vegetables" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCxOVZqh11zQdG30nhBjjNhORZvKQwX1KzCqlg5i1FAZWSpQlbgoYiNR3j7SAVhMPPRLEtqWWe5X_TLsLbD0KaGuGKB2y8MovKM5J9ounPa3en-BLXJps2oYOILJNH_iWCbeSMgRmVmwPR1hZSHnTHv-mKkdCAj2tmeLdfNqHqo4Ab4yttmpp4eUUEPg9p9y-mzJ43-eX34ltqmFlXLfbnQ1NdLsKOgolQYE9m3ONKI7qUjgnrDDxPT_F7H3zOEVxMUEJ8HnqhPt8Pg");'></div>
+<div class="absolute top-3 right-3">
+<button class="size-9 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-red-500 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-xl fill-1">favorite</span>
+</button>
+</div>
+<div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-primary text-sm fill-1">star</span>
+<span class="text-xs font-bold">4.5</span>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-lg leading-tight group-hover:text-primary transition-colors">Zen Garden Buddha Bowl</h3>
+<span class="text-primary font-bold text-sm bg-primary/10 px-2 py-0.5 rounded">450 kcal</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-center bg-cover" data-alt="Chef David Chen portrait" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCUEwqXKIFeCiK-43VePPIZMAS-6M5CD0ci7nwWtRd1gAOdolzvpBSHqcVc1OqNTtN0RB0AnxzES5Mm5Eqvwlkh0Arr1APpsa3yz51qlGOP2ScI6UredQA7DGtIcYdklxWXUu3_x4hRBR6eD0Pv53tlseB5TmSj4YYs7SYP3XIoi_YSZENiwsYQXku_L8iU8wkdoASLWcJxTM_AO-lf4_TJUQIApkIXB496MyyjtEH_GNND5AO8t4IppD1bjiyV44FDkFW0ayxbRO7v");'></div>
+<p class="text-xs text-slate-500 dark:text-slate-400 font-medium">David Chen</p>
+</div>
+</div>
+</div>
+<div class="group flex flex-col bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:shadow-xl hover:shadow-primary/5 transition-all">
+<div class="relative aspect-[4/3] w-full overflow-hidden">
+<div class="absolute inset-0 bg-center bg-cover transition-transform duration-500 group-hover:scale-105" data-alt="Pasta with pesto and cherry tomatoes" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC_mAoX4uojyXwnN2OOsLoflhZ6OA1dHd4Ljlj788eg_PV_Nbi_z5ZF_bXVhNECShZGMAZ6ecXWq3EF-gSw0GeQvHHoihQETwckBLw2eHprQZpuYVLQTiJ6eN8jX7JJ32Daa8zQfWxbuFdRrDjHp3nxa_QY8Z35mHa3iEBJleZi9AOjRCVpTyWkvgbxK-LT5J7buA_WUIpeQVxyRunb3hfjwQHZrfDPnGYt5lLDk-TmCAw0MGi73RjN7LLUEkLOS_jzFt-RBWExLt6L");'></div>
+<div class="absolute top-3 right-3">
+<button class="size-9 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-xl">favorite</span>
+</button>
+</div>
+<div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-primary text-sm fill-1">star</span>
+<span class="text-xs font-bold">4.9</span>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-lg leading-tight group-hover:text-primary transition-colors">Homemade Basil Pesto Linguine</h3>
+<span class="text-primary font-bold text-sm bg-primary/10 px-2 py-0.5 rounded">620 kcal</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-center bg-cover" data-alt="Chef Julia Smith portrait" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAFp_yqUMVnEsmlYpGqvKYNo8XjfwR6iL8LOB0dcWyjLLZgmoAucppJwy5W8a35GcBwH8n8ju8FE3bIZHLLjvPE4Joa4FBJwBO7oBXNtzG7jOVezrsL7iTMxSLPu0w4arRCXN8HsO3_OD3DeVa0PnwoPP5KVkqiEIl-9sOu6kcMQmglnGYuFC6kY55yC99VaZF2VwazkbgIJb6viIe5NEabJzRRZtfAeP2fBIdPH6b8Wq9hQIsUwf-UuJeKFvxVUgi3txn5eUT0Khb_");'></div>
+<p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Julia Smith</p>
+</div>
+</div>
+</div>
+<div class="group flex flex-col bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:shadow-xl hover:shadow-primary/5 transition-all">
+<div class="relative aspect-[4/3] w-full overflow-hidden">
+<div class="absolute inset-0 bg-center bg-cover transition-transform duration-500 group-hover:scale-105" data-alt="Healthy morning toast with eggs" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAD-w25h4iTWvcZqcCdXfbxPbvYL2LOaODg6nZAThEZomtRdhmg9EQaA6blEppE5XLQTVXdZq91yvbONQbMgjFD4We_2-eeZHgfSDOINdUS3stKIts2WYsqs3s6u9BulAxYacaPBNZ4hj3i9lc66SasYc3zRpsASs2oV-LZSUIyWOK-zfi9JJHNm05l1kKPCX828Y_ACAUwwvPmzCD--JqXrtmNvsWXvRYysJMbduQoObN0946qq1T63uZRlHCVkCqjwNPuq7yjJI2c");'></div>
+<div class="absolute top-3 right-3">
+<button class="size-9 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-xl">favorite</span>
+</button>
+</div>
+<div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-primary text-sm fill-1">star</span>
+<span class="text-xs font-bold">4.7</span>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-lg leading-tight group-hover:text-primary transition-colors">Smoked Salmon Breakfast Toast</h3>
+<span class="text-primary font-bold text-sm bg-primary/10 px-2 py-0.5 rounded">280 kcal</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-center bg-cover" data-alt="Chef Sarah Connor portrait" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAouNmRMPl2xwP745DzTxac95VTaPiumd2qfsXtckhK2IBksJ3lnmvCPwTUcmHLgZvqNX7zgzJVQYKNP8YDTNicaOEEEeYxbdWI6pgadJVcdKUBDqUQsdPwLfIVDho9pIni0MUKHst05zN18nNJdHg1u0z0fTEYdtpd8WjdLQOJO9AH2j5n-Lfm4wceJ2tfwhhJ27uQqe_I9SgkynZnIaBl7eo6ynlWvvI-ZoIJzUny1VXOSqAVPLGXxK-3WJcGYWE0_wf9cps1Ol1O");'></div>
+<p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Sarah Connor</p>
+</div>
+</div>
+</div>
+<div class="group flex flex-col bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:shadow-xl hover:shadow-primary/5 transition-all">
+<div class="relative aspect-[4/3] w-full overflow-hidden">
+<div class="absolute inset-0 bg-center bg-cover transition-transform duration-500 group-hover:scale-105" data-alt="Gourmet grilled cheese sandwich" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAEaAMAS3o5zlX2pq8eSgT4mrtH1XITYBDW5XuCNW09VAcONOq-LtWB2y6s0WKNWOQXEr3boiPTFXkxktquHeQEMpslwgwJgcRb2dcmgrTFW_D4pQlELyJKjQw5vlFEOZSBaujfEwLMrloZDg0DKTkBDi2Iv4ilRen-hUGWkG8AMowS9dq97j8sVP5POAZgbMmtJCzFQXmDEpMhnWCH1HJOhFZoq_tjFH22Tx_BKl72SHdYH7Hfnm1a5Vedscexub_vvPqPvXCrYD3w");'></div>
+<div class="absolute top-3 right-3">
+<button class="size-9 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-xl">favorite</span>
+</button>
+</div>
+<div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-primary text-sm fill-1">star</span>
+<span class="text-xs font-bold">4.6</span>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-lg leading-tight group-hover:text-primary transition-colors">Artisan Sourdough Melts</h3>
+<span class="text-primary font-bold text-sm bg-primary/10 px-2 py-0.5 rounded">540 kcal</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-center bg-cover" data-alt="Chef Mike Ross portrait" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDhQ_UTrNTjUzorRL-V0e8WJKTVxm5swwVZcawSfITjvz2w0zcIKPCaeEoSJAR30ByBK7syAIdi8ywyh28X7A8UNnPLMsXWii6vEwPw1IFsqx5KFOu0bAFoVsWY0mbpUBOXVaIdF7h2q5nPnY3Go5lJ-wPuEv8FeDQpTPHOn56bl1tPgiuoufIhPklQulcuNb04N2KyRRPn_nrYN1bcNhYjjtj8f7ouDcF1EumCDJhJKLKKV8kVxjbH_tEyKdJCVeqveEyi77za40H7");'></div>
+<p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Mike Ross</p>
+</div>
+</div>
+</div>
+<div class="group flex flex-col bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:shadow-xl hover:shadow-primary/5 transition-all">
+<div class="relative aspect-[4/3] w-full overflow-hidden">
+<div class="absolute inset-0 bg-center bg-cover transition-transform duration-500 group-hover:scale-105" data-alt="French toast with berries and syrup" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAsE-HMmf4P6K02QHdb4irWhfdKEfhf2hSQf9vnDvTbUsgLHTV38XdoDRpBuRy0bPwuB7iN1lLreUmdx_aySlgBAvE4UCYpjyrm5CoQVtMA0kuk7qJOJzvVzXBVcMzj6AZgyIfZo2UBPlNiBEbIsubu2ZoSrRfuqN0LJa3F6Cn_g_lHXWkMN2xoNWZy4m7ODvnMvpJ1TPPAFT0o6I8HQJ3mw_AS9A8OURdqYtPc1mqjnlwcT8sQBZ-f3z5tQSutroX4s6X9nkNrgILq");'></div>
+<div class="absolute top-3 right-3">
+<button class="size-9 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-xl">favorite</span>
+</button>
+</div>
+<div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-primary text-sm fill-1">star</span>
+<span class="text-xs font-bold">4.4</span>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-lg leading-tight group-hover:text-primary transition-colors">Brioche French Toast Platter</h3>
+<span class="text-primary font-bold text-sm bg-primary/10 px-2 py-0.5 rounded">710 kcal</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-center bg-cover" data-alt="Chef Leo Wright portrait" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDq3PIGWy_Cy7_umS4i4pTxsh0UPQ1USmG8cdCZ8WGU8l0nYqZJBosNf_xizn1bynIjETPdUeQ_nFPQi8m89nOXZKJ3pJ9UwD1nhWMUtMdCMhFb7iTW2xJnhWBDqvePvAnzzL3lIvILNPPhQOu7vMGYQ-UPxIy28cAqM8MqrvXLuvCy6ROwfIe6vQ9BM6h0cS0nLWeN4qlmApHXFA3t3alGmgqJRLtFNgA3bNRPTsKcaiuYtLkRXkuuP6KthjkFq0dO-2gjxM7e78V7");'></div>
+<p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Leo Wright</p>
+</div>
+</div>
+</div>
+<div class="group flex flex-col bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:shadow-xl hover:shadow-primary/5 transition-all">
+<div class="relative aspect-[4/3] w-full overflow-hidden">
+<div class="absolute inset-0 bg-center bg-cover transition-transform duration-500 group-hover:scale-105" data-alt="Grilled chicken skewers with veggies" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCyE6UPtAA91xztPWli7jHz0-F_YIHldMGMLTOxDu6D55XHqSnPu9PSmMGC47g9of9A0k1ziiePxcLTehXcLvN74JFaukP3NUel1Ch2jdO_1xYIAvHDPKDWOhErLLJ8WmleA-9ZgDnb982MLmt-HD8f8JOjU6NgojMtxyyGVvKs6DdFyFwOKrl9x-RY9q-NbIbsvTLmrzJCDjmDCxVbrRVrCyM5oZUup5XDujl8WwQWgKs1YSM4K4hya6_JuBcml2bhwJRn3sraLGV2");'></div>
+<div class="absolute top-3 right-3">
+<button class="size-9 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-xl">favorite</span>
+</button>
+</div>
+<div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-primary text-sm fill-1">star</span>
+<span class="text-xs font-bold">4.7</span>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-lg leading-tight group-hover:text-primary transition-colors">Spiced Chicken Souvlaki</h3>
+<span class="text-primary font-bold text-sm bg-primary/10 px-2 py-0.5 rounded">390 kcal</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-center bg-cover" data-alt="Chef Alex Jones portrait" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBodmSQcrSWBmCVe63qjM6WC5-qfEk78WYup8PqYUlRiPKqjrhcrXiZPz7PFD52wsGbrabC6snGqT4wj9bdAYlFpl96heGQGlYh9jREop7ahWK0Vu9IDLS_9rFbXHkFmZITQyo0K9Bitg_uMmq8cotWW2LpcFRigEmZqmaGeoB3NZMZFj3tqdZ7ZpaFJyk6Y66tJQ09Tyg-wFlG5_69SrAX6MZmtONc8l0e5qI40qZDkOqvhn2inM5PWtFWlyu2DvMXn3HBtagIEXuN");'></div>
+<p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Alex Jones</p>
+</div>
+</div>
+</div>
+<div class="group flex flex-col bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:shadow-xl hover:shadow-primary/5 transition-all">
+<div class="relative aspect-[4/3] w-full overflow-hidden">
+<div class="absolute inset-0 bg-center bg-cover transition-transform duration-500 group-hover:scale-105" data-alt="Healthy salmon bowl with greens" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDUrgROEdXXH8bd9n2aCsdIIOTrQxMg2j4AcnihxKVzEnUrb1A3b4vHE8i_bI2CGxx4qCezc8VqeBNVmygHalRu2mtATCY4Pymb-N6uoe-nGGmH7i1XoCWBu9eoFSgIdWBzikZrZxjw_D4g4j80JNHV45bhkvUUgiAc_9J59Z1Ks9nqMZkLRr8viUDyFNO2hhdtPHhR52WbyhazddnF7iItwAiaiU52ELUUUbUfhpRRkNS9Df7NEibnQXUWKeSZAZDxyGQIv8L3HsAe");'></div>
+<div class="absolute top-3 right-3">
+<button class="size-9 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-xl">favorite</span>
+</button>
+</div>
+<div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-primary text-sm fill-1">star</span>
+<span class="text-xs font-bold">4.9</span>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-lg leading-tight group-hover:text-primary transition-colors">Glazed Miso Salmon Bowl</h3>
+<span class="text-primary font-bold text-sm bg-primary/10 px-2 py-0.5 rounded">425 kcal</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-center bg-cover" data-alt="Chef Elena Parker portrait" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBdAo-_TwiWclHfNIyOluq3xZPRkTBxSxBjpUxLhucoHtBRAX6D3jEklJwfkY-zZle0w5K0V_TkjWNfERrVAYKNruWwp8xqxhqS3KGrqApYiNCbqntHXbEU7qZovLarWuNboJEZ_w2-6PPtTX6N6PfWFTnLmfPdMnpjQwXBxb5g05Y-A6MRdLnT3EUn50e43HJWFtm1MWzKDmOADHERR2HwGvyuqcRhQkf98eo_CHaIKPNngdL53umA7cWruzgnzxrQgCGyBfcEHwFy");'></div>
+<p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Elena Parker</p>
+</div>
+</div>
+</div>
+</section>
+<div class="flex justify-center py-8">
+<button class="flex items-center gap-2 px-8 py-3 rounded-full border-2 border-primary text-primary font-bold hover:bg-primary hover:text-white transition-all">
+                        Load More Recipes
+                        <span class="material-symbols-outlined">expand_more</span>
+</button>
+</div>
+</main>
+<footer class="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-10 px-6 lg:px-40">
+<div class="flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="flex items-center gap-2">
+<div class="size-6 text-primary">
+<svg fill="currentColor" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M24 4H6V17.3333V30.6667H24V44H42V30.6667V17.3333H24V4Z" fill-rule="evenodd"></path>
+</svg>
+</div>
+<span class="font-bold">FoodieApp</span>
+</div>
+<div class="flex gap-8 text-sm text-slate-500 dark:text-slate-400">
+<a class="hover:text-primary" href="#">About</a>
+<a class="hover:text-primary" href="#">Privacy</a>
+<a class="hover:text-primary" href="#">Terms</a>
+<a class="hover:text-primary" href="#">Help Center</a>
+</div>
+<div class="flex gap-4">
+<button class="size-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined text-lg">public</span>
+</button>
+<button class="size-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined text-lg">share</span>
+</button>
+</div>
+</div>
+<div class="mt-8 text-center text-xs text-slate-400">
+                    © 2024 FoodieApp Inc. All rights reserved.
+                </div>
+</footer>
+</div>
+</div>
+<style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</body></html>
