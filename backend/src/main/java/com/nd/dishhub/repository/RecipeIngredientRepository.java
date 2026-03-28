@@ -1,13 +1,14 @@
 package com.nd.dishhub.repository;
 
-import com.nd.dishhub.model.RecipeIngredientEntity;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import com.nd.dishhub.model.RecipeIngredientEntity;
 
 @Repository
 public interface RecipeIngredientRepository extends JpaRepository<RecipeIngredientEntity, Long> {
