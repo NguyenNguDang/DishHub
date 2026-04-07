@@ -61,67 +61,6 @@ export const UserProfilePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark">
-      {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <div className="flex items-center gap-2">
-              <div className="bg-primary p-1.5 rounded-lg flex items-center justify-center">
-                <span className="material-symbols-outlined text-white text-2xl">
-                  restaurant
-                </span>
-              </div>
-              <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-                DishHub
-              </h2>
-            </div>
-
-            {/* Navigation Links */}
-            <nav className="hidden md:flex items-center gap-8">
-              <a
-                className="text-sm font-semibold hover:text-primary transition-colors text-slate-600 dark:text-slate-400"
-                href="#"
-              >
-                Home
-              </a>
-              <a
-                className="text-sm font-semibold hover:text-primary transition-colors text-slate-600 dark:text-slate-400"
-                href="#"
-              >
-                Recipes
-              </a>
-              <a
-                className="text-sm font-semibold hover:text-primary transition-colors text-slate-600 dark:text-slate-400"
-                href="#"
-              >
-                Orders
-              </a>
-              <a
-                className="text-sm font-semibold text-primary border-b-2 border-primary py-5"
-                href="#"
-              >
-                Profile
-              </a>
-            </nav>
-
-            {/* Profile Action */}
-            <div className="flex items-center gap-4">
-              <button className="p-2 text-slate-500 hover:text-primary transition-colors">
-                <span className="material-symbols-outlined">notifications</span>
-              </button>
-              <div className="size-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center overflow-hidden">
-                <img
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                  src="https://ui-avatars.com/api/?name=Alex+Chen&background=f27f0d&color=fff&bold=true"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Main Content */}
       <main className="max-w-5xl mx-auto px-4 py-8 sm:py-12">
         <div className="mb-8">

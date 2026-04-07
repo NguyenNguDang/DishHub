@@ -71,3 +71,68 @@ export interface NavItem {
   icon: string;
   badge?: number;
 }
+
+// Shopping List Types
+export interface ShoppingListItem {
+  id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  category: string;
+  isChecked: boolean;
+  addedAt: Date;
+}
+
+export interface ShoppingList {
+  id: string;
+  userId: string;
+  items: ShoppingListItem[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// User Profile Types
+export interface UserProfile extends User {
+  bio?: string;
+  favoriteRecipes: string[];
+  followers: number;
+  following: number;
+  preferences?: UserPreferences;
+}
+
+export interface UserPreferences {
+  theme: 'light' | 'dark';
+  language: 'en' | 'vi';
+  notifications: boolean;
+  dietaryRestrictions: string[];
+}
+
+// API Request Types
+export interface CreateRecipeRequest {
+  title: string;
+  description: string;
+  image: string;
+  cookTime: number;
+  prepTime: number;
+  servings: number;
+  difficulty: 'easy' | 'medium' | 'hard';
+  category: string;
+  tags: string[];
+  ingredients: Ingredient[];
+  instructions: string[];
+}
+
+export interface UpdateRecipeRequest extends Partial<CreateRecipeRequest> {}
+
+export interface UpdateUserProfileRequest extends Partial<Omit<UserProfile, 'id' | 'createdAt'>> {}
+
+export interface CreateShoppingListItemRequest {
+  name: string;
+  quantity: number;
+  unit: string;
+  category: string;
+}
+
+export interface UpdateShoppingListItemRequest extends Partial<CreateShoppingListItemRequest> {
+  isChecked?: boolean;
+}

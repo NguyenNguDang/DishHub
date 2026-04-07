@@ -14,6 +14,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -22,10 +23,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
     
     private final JwtFilter jwtFilter;
+    private final CorsConfigurationSource corsConfigurationSource;
     
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
@@ -33,6 +36,7 @@ public class SecurityConfig {
                         .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/swagger-resources/**").permitAll()
                         // Public API endpoints
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
                         // Ingredients endpoints - match both /api/v1/ingredients and /api/v1/ingredients/**
                         .requestMatchers("/api/v1/ingredients", "/api/v1/ingredients/**").permitAll()
                         // User endpoints - require authentication

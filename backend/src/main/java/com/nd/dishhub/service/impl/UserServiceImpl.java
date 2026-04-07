@@ -85,6 +85,7 @@ public class UserServiceImpl implements UserService {
                 .id(user.getId())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
+                .username(user.getFirstName() + " " + user.getLastName())
                 .age(user.getAge())
                 .weight(user.getWeight())
                 .height(user.getHeight())

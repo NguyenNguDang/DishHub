@@ -33,3 +33,11 @@ body {
 body.dark {
   background-color: var(--background-dark);
 }
+
+/* Hide default password reveal button */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
+

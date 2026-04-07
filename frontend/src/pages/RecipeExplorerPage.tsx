@@ -1,17 +1,7 @@
-import React, { useState } from 'react';
-import { Heart, Search, Settings } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-
-interface Recipe {
-  id: string;
-  title: string;
-  calories: number;
-  rating: number;
-  chef: string;
-  chefImage: string;
-  image: string;
-  isFavorite: boolean;
-}
+import { recipeApiClient } from '../services/recipeApi';
+import type { Recipe } from '../types';
 
 interface Filters {
   search: string;
@@ -29,74 +19,89 @@ const RecipeExplorerPage: React.FC = () => {
   });
 
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const categories = ['All', 'Breakfast', 'Vegan', 'Quick & Easy', 'Gluten-Free', 'Desserts'];
 
-  const mockRecipes: Recipe[] = [
-    {
-      id: '1',
-      title: 'Zen Garden Buddha Bowl',
-      calories: 450,
-      rating: 4.5,
-      chef: 'David Chen',
-      chefImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCUEwqXKIFeCiK-43VePPIZMAS-6M5CD0ci7nwWtRd1gAOdolzvpBSHqcVc1OqNTtN0RB0AnxzES5Mm5Eqvwlkh0Arr1APpsa3yz51qlGOP2ScI6UredQA7DGtIcYdklxWXUu3_x4hRBR6eD0Pv53tlseB5TmSj4YYs7SYP3XIoi_YSZENiwsYQXku_L8iU8wkdoASLWcJxTM_AO-lf4_TJUQIApkIXB496MyyjtEH_GNND5AO8t4IppD1bjiyV44FDkFW0ayxbRO7v',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD8e_NgLFd7sTSYQxA1eHVs-xPBzK5B0hhS0SMDO1N_ZD0CU2BBL77vHPM5yG8G2LOJzNvxjCfKwB_F7W9e9Nwe2fSQIFJLOFVjlnFqMqXkPt5V_wL1I0fHb8IDJZ0fZO_eQhXtWRFmX0q0qsKtPfJ73NXHOTkPdO3e-eVU5BZCMiyjlp4TYKYSdFjdHCJ2W-uM8EAJHVMQD-Eo6jrZY3K0g6xpM5QkN7lUYLHlUJELmGj0N1UoRIKG5jJ3xW-n6v5gCJgT6nRqOvPQ2Fc8QT3CQ_75pMwFQYYdPWARXUSL8TN_VngL8j9jLBvv0DvvOJz8LFiqCFQhOX',
-    },
-    {
-      id: '2',
-      title: 'Homemade Basil Pesto Linguine',
-      calories: 620,
-      rating: 4.9,
-      chef: 'Julia Smith',
-      chefImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAFp_yqUMVnEsmlYpGqvKYNo8XjfwR6iL8LOB0dcWyjLLZgmoAucppJwy5W8a35GcBwH8n8ju8FE3bIZHLLjvPE4Joa4FBJwBO7oBXNtzG7jOVezrsL7iTMxSLPu0w4arRCXN8HsO3_OD3DeVa0PnwoPP5KVkqiEIl-9sOu6kcMQmglnGYuFC6kY55yC99VaZF2VwazkbgIJb6viIe5NEabJzRRZtfAeP2fBIdPH6b8Wq9hQIsUwf-UuJeKFvxVUgi3txn5eUT0Khb_',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC_mAoX4uojyXwnN2OOsLoflhZ6OA1dHd4Ljlj788eg_PV_Nbi_z5ZF_bXVhNECShZGMAZ6ecXWq3EF-gSw0GeQvHHoihQETwckBLw2eHprQZpuYVLQTiJ6eN8jX7JJ32Daa8zQfWxbuFdRrDjHp3nxa_QY8Z35mHa3iEBJleZi9AOjRCVpTyWkvgbxK-LT5J7buA_WUIpeQVxyRunb3hfjwQHZrfDPnGYt5lLDk-TmCAw0MGi73RjN7LLUEkLOS_jzFt-RBWExLt6L',
-    },
-    {
-      id: '3',
-      title: 'Smoked Salmon Breakfast Toast',
-      calories: 280,
-      rating: 4.7,
-      chef: 'Sarah Connor',
-      chefImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAouNmRMPl2xwP745DzTxac95VTaPiumd2qfsXtckhK2IBksJ3lnmvCPwTUcmHLgZvqNX7zgzJVQYKNP8YDTNicaOEEEeYxbdWI6pgadJVcdKUBDqUQsdPwLfIVDho9pIni0MUKHst05zN18nNJdHg1u0z0fTEYdtpd8WjdLQOJO9AH2j5n-Lfm4wceJ2tfwhhJ27uQqe_I9SgkynZnIaBl7eo6ynlWvvI-ZoIJzUny1VXOSqAVPLGXxK-3WJcGYWE0_wf9cps1Ol1O',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAD-w25h4iTWvcZqcCdXfbxPbvYL2LOaODg6nZAThEZomtRdhmg9EQaA6blEppE5XLQTVXdZq91yvbONQbMgjFD4We_2-eeZHgfSDOINdUS3stKIts2WYsqs3s6u9BulAxYacaPBNZ4hj3i9lc66SasYc3zRpsASs2oV-LZSUIyWOK-zfi9JJHNm05l1kKPCX828Y_ACAUwwvPmzCD--JqXrtmNvsWXvRYysJMbduQoObN0946qq1T63uZRlHCVkCqjwNPuq7yjJI2c',
-    },
-    {
-      id: '4',
-      title: 'Artisan Sourdough Melts',
-      calories: 540,
-      rating: 4.6,
-      chef: 'Mike Ross',
-      chefImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDhQ_UTrNTjUzorRL-V0e8WJKTVxm5swwVZcawSfITjvz2w0zcIKPCaeEoSJAR30ByBK7syAIdi8ywyh28X7A8UNnPLMsXWii6vEwPw1IFsqx5KFOu0bAFoVsWY0mbpUBOXVaIdF7h2q5nPnY3Go5lJ-wPuEv8FeDQpTPHOn56bl1tPgiuoufIhPklQulcuNb04N2KyRRPn_nrYN1bcNhYjjtj8f7ouDcF1EumCDJhJKLKKV8kVxjbH_tEyKdJCVeqveEyi77za40H7',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAEaAMAS3o5zlX2pq8eSgT4mrtH1XITYBDW5XuCNW09VAcONOq-LtWB2y6s0WKNWOQXEr3boiPTFXkxktquHeQEMpslwgwJgcRb2dcmgrTFW_D4pQlELyJKjQw5vlFEOZSBaujfEwLMrloZDg0DKTkBDi2Iv4ilRen-hUGWkG8AMowS9dq97j8sVP5POAZgbMmtJCzFQXmDEpMhnWCH1HJOhFZoq_tjFH22Tx_BKl72SHdYH7Hfnm1a5Vedscexub_vvPqPvXCrYD3w',
-    },
-    {
-      id: '5',
-      title: 'Brioche French Toast Platter',
-      calories: 710,
-      rating: 4.4,
-      chef: 'Leo Wright',
-      chefImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDq3PIGWy_Cy7_umS4i4pTxsh0UPQ1USmG8cdCZ8WGU8l0nYqZJBosNf_xizn1bynIjETPdUeQ_nFPQi8m89nOXZKJ3pJ9UwD1nhWMUtMdCMhFb7iTW2xJnhWBDqvePvAnzzL3lIvILNPPhQOu7vMGYQ-UPxIy28cAqM8MqrvXLuvCy6ROwfIe6vQ9BM6h0cS0nLWeN4qlmApHXFA3t3alGmgqJRLtFNgA3bNRPTsKcaiuYtLkRXkuuP6KthjkFq0dO-2gjxM7e78V7',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAsE-HMmf4P6K02QHdb4irWhfdKEfhf2hSQf9vnDvTbUsgLHTV38XdoDRpBuRy0bPwuB7iN1lLreUmdx_aySlgBAvE4UCYpjyrm5CoQVtMA0kuk7qJOJzvVzXBVcMzj6AZgyIfZo2UBPlNiBEbIsubu2ZoSrRfuqN0LJa3F6Cn_g_lHXWkMN2xoNWZy4m7ODvnMvpJ1TPPAFT0o6I8HQJ3mw_AS9A8OURdqYtPc1mqjnlwcT8sQBZ-f3z5tQSutroX4s6X9nkNrgILq',
-    },
-    {
-      id: '6',
-      title: 'Spiced Chicken Souvlaki',
-      calories: 390,
-      rating: 4.7,
-      chef: 'Alex Jones',
-      chefImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBodmSQcrSWBmCVe63qjM6WC5-qfEk78WYup8PqYUlRiPKqjrhcrXiZPz7PFD52wsGbrabC6snGqT4wj9bdAYlFpl96heGQGlYh9jREop7ahWK0Vu9IDLS_9rFbXHkFmZITQyo0K9Bitg_uMmq8cotWW2LpcFRigEmZqmaGeoB3NZMZFj3tqdZ7ZpaFJyk6Y66tJQ09Tyg-wFlG5_69SrAX6MZmtONc8l0e5qI40qZDkOqvhn2inM5PWtFWlyu2DvMXn3HBtagIEXuN',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCyE6UPtAA91xztPWli7jHz0-F_YIHldMGMLTOxDu6D55XHqSnPu9PSmMGC47g9of9A0k1ziiePxcLTehXcLvN74JFaukP3NUel1Ch2jdO_1xYIAvHDPKDWOhErLLJ8WmleA-9ZgDnb982MLmt-HD8f8JOjU6NgojMtxyyGVvKs6DdFyFwOKrl9x-RY9q-NbIbsvTLmrzJCDjmDCxVbrRVrCyM5oZUup5XDujl8WwQWgKs1YSM4K4hya6_JuBcml2bhwJRn3sraLGV2',
-    },
-    {
-      id: '7',
-      title: 'Glazed Miso Salmon Bowl',
-      calories: 425,
-      rating: 4.9,
-      chef: 'Elena Parker',
-      chefImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBdAo-_TwiWclHfNIyOluq3xZPRkTBxSxBjpUxLhucoHtBRAX6D3jEklJwfkY-zZle0w5K0V_TkjWNfERrVAYKNruWwp8xqxhqS3KGrqApYiNCbqntHXbEU7qZovLarWuNboJEZ_w2-6PPtTX6N6PfWFTnLmfPdMnpjQwXBxb5g05Y-A6MRdLnT3EUn50e43HJWFtm1MWzKDmOADHERR2HwGvyuqcRhQkf98eo_CHaIKPNngdL53umA7cWruzgnzxrQgCGyBfcEHwFy',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDUrgROEdXXH8bd9n2aCsdIIOTrQxMg2j4AcnihxKVzEnUrb1A3b4vHE8i_bI2CGxx4qCezc8VqeBNVmygHalRu2mtATCY4Pymb-N6uoe-nGGmH7i1XoCWBu9eoFSgIdWBzikZrZxjw_D4g4j80JNHV45bhkvUUgiAc_9J59Z1Ks9nqMZkLRr8viUDyFNO2hhdtPHhR52WbyhazddnF7iItwAiaiU52ELUUUbUfhpRRkNS9Df7NEibnQXUWKeSZAZDxyGQIv8L3HsAe',
-    },
-  ];
+  // Fetch recipes on component mount
+  useEffect(() => {
+    fetchRecipes();
+  }, []);
+
+  const fetchRecipes = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      let data: Recipe[] = [];
+      
+      if (filters.search) {
+        // Tìm kiếm
+        data = await recipeApiClient.searchRecipes(filters.search);
+      } else if (filters.category !== 'All') {
+        // Lọc theo danh mục
+        data = await recipeApiClient.getRecipesByCategory(filters.category);
+      } else {
+        // Danh sách tất cả
+        data = await recipeApiClient.getRecipes();
+      }
+      
+      setRecipes(data);
+    } catch (err) {
+      console.error('Error fetching recipes:', err);
+      setError('Failed to load recipes. Please try again.');
+      setRecipes([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle search submission
+  const handleSearchSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!filters.search.trim()) {
+      setError('Please enter a search query');
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await recipeApiClient.searchRecipes(filters.search);
+      setRecipes(data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to search recipes. Please try again.';
+      console.error('Search error:', err);
+      setError(errorMessage);
+      setRecipes([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle category change
+  const handleCategoryClick = async (category: string) => {
+    setFilters({ ...filters, category, search: '' });
+    setError(null);
+    setLoading(true);
+    
+    try {
+      let data: Recipe[];
+      if (category !== 'All') {
+        data = await recipeApiClient.getRecipesByCategory(category);
+      } else {
+        data = await recipeApiClient.getRecipes();
+      }
+      setRecipes(data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : `Failed to load ${category} recipes.`;
+      console.error(`Error fetching ${category} recipes:`, err);
+      setError(errorMessage);
+      setRecipes([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const toggleFavorite = (recipeId: string) => {
     const newFavorites = new Set(favorites);
@@ -108,43 +113,42 @@ const RecipeExplorerPage: React.FC = () => {
     setFavorites(newFavorites);
   };
 
-  const handleCategoryClick = (category: string) => {
-    setFilters({ ...filters, category });
-  };
-
   return (
     <div className="min-h-screen bg-white dark:bg-slate-900">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-        <div className="max-w-6xl mx-auto px-4 lg:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 text-orange-500">
-              <svg fill="currentColor" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                <path clipRule="evenodd" d="M24 4H6V17.3333V30.6667H24V44H42V30.6667V17.3333H24V4Z" fillRule="evenodd"></path>
-              </svg>
-            </div>
-            <span className="font-bold text-lg dark:text-white">DishHub</span>
-          </div>
-          <nav className="hidden md:flex items-center gap-8">
-            <a href="#" className="text-sm text-slate-600 dark:text-slate-300 hover:text-orange-500">Home</a>
-            <a href="#" className="text-sm text-slate-600 dark:text-slate-300 hover:text-orange-500">Recipes</a>
-            <a href="#" className="text-sm text-slate-600 dark:text-slate-300 hover:text-orange-500">Orders</a>
-            <a href="#" className="text-sm text-slate-600 dark:text-slate-300 hover:text-orange-500">Profile</a>
-          </nav>
-          <div className="flex items-center gap-4">
-            <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full">
-              <span className="material-symbols-outlined text-slate-600 dark:text-slate-300">notifications</span>
-            </button>
-            <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full">
-              <span className="material-symbols-outlined text-slate-600 dark:text-slate-300">account_circle</span>
-            </button>
-          </div>
-        </div>
-      </header>
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 lg:px-8 py-8">
-        {/* Hero Section */}
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3">
+            <span className="material-symbols-outlined text-red-600 dark:text-red-400 mt-0.5">
+              error
+            </span>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-red-800 dark:text-red-300">{error}</p>
+            </div>
+            <button
+              onClick={() => setError(null)}
+              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+            >
+              <span className="material-symbols-outlined text-lg">close</span>
+            </button>
+          </div>
+        )}
+
+        {/* Loading Indicator */}
+        {loading && (
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center gap-3">
+            <div className="animate-spin">
+              <span className="material-symbols-outlined text-blue-600 dark:text-blue-400">
+                refresh
+              </span>
+            </div>
+            <p className="text-sm font-medium text-blue-800 dark:text-blue-300">
+              Loading recipes...
+            </p>
+          </div>
+        )}
         <div className="mb-12">
           <h1 className="text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white mb-2">
             Discover your next meal
@@ -166,9 +170,11 @@ const RecipeExplorerPage: React.FC = () => {
           </div>
           <button
             style={{ backgroundColor: '#f27f0d' }}
-            className="px-6 py-3 text-white font-semibold rounded-lg transition-opacity"
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.8')}
+            className="px-6 py-3 text-white font-semibold rounded-lg transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+            onMouseEnter={(e) => !loading && (e.currentTarget.style.opacity = '0.8')}
             onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+            onClick={handleSearchSubmit}
+            disabled={loading}
           >
             Search
           </button>
@@ -216,7 +222,8 @@ const RecipeExplorerPage: React.FC = () => {
               <button
                 key={category}
                 onClick={() => handleCategoryClick(category)}
-                className={`px-4 py-2 rounded-full whitespace-nowrap font-medium text-sm transition-colors ${
+                disabled={loading}
+                className={`px-4 py-2 rounded-full whitespace-nowrap font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                   filters.category === category
                     ? 'bg-orange-500 text-white'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -230,7 +237,47 @@ const RecipeExplorerPage: React.FC = () => {
 
         {/* Recipe Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-          {mockRecipes.map((recipe) => (
+          {/* Empty State */}
+          {recipes.length === 0 && !loading && !error && (
+            <div className="col-span-full text-center py-12">
+              <span className="material-symbols-outlined text-6xl text-slate-300 dark:text-slate-600 flex justify-center mb-4">
+                restaurant
+              </span>
+              <p className="text-slate-500 dark:text-slate-400 font-medium">
+                No recipes found. Try adjusting your search or filters.
+              </p>
+            </div>
+          )}
+
+          {/* Error State - No recipes loaded */}
+          {recipes.length === 0 && error && (
+            <div className="col-span-full text-center py-12">
+              <span className="material-symbols-outlined text-6xl text-red-300 dark:text-red-600 flex justify-center mb-4">
+                error_outline
+              </span>
+              <p className="text-slate-500 dark:text-slate-400 font-medium">
+                Unable to load recipes at this time.
+              </p>
+            </div>
+          )}
+
+          {/* Loading Skeleton */}
+          {loading && recipes.length === 0 && (
+            <>
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 animate-pulse">
+                  <div className="aspect-[4/3] bg-slate-200 dark:bg-slate-700"></div>
+                  <div className="p-4 space-y-3">
+                    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4"></div>
+                    <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+
+          {/* Recipe Cards */}
+          {recipes.map((recipe) => (
             <Link
               key={recipe.id}
               to={`/recipes/${recipe.id}`}
@@ -270,16 +317,13 @@ const RecipeExplorerPage: React.FC = () => {
                     {recipe.title}
                   </h3>
                   <span className="text-orange-500 font-bold text-sm bg-orange-500/10 px-2 py-0.5 rounded">
-                    {recipe.calories} kcal
+                    {recipe.prepTime + recipe.cookTime} min
                   </span>
                 </div>
-                {/* Chef Profile */}
+                {/* Recipe Details */}
                 <div className="flex items-center gap-2">
-                  <div
-                    className="w-6 h-6 rounded-full bg-center bg-cover"
-                    style={{ backgroundImage: `url("${recipe.chefImage}")` }}
-                  />
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{recipe.chef}</p>
+                  <span className="material-symbols-outlined text-xs text-orange-500">star</span>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{recipe.rating} • {recipe.reviews} reviews</p>
                 </div>
               </div>
             </Link>
@@ -287,23 +331,28 @@ const RecipeExplorerPage: React.FC = () => {
         </div>
 
         {/* Load More Button */}
-        <div className="flex justify-center py-8">
-          <button
-            style={{ borderColor: '#f27f0d', color: '#f27f0d' }}
-            className="flex items-center gap-2 px-8 py-3 rounded-full border-2 font-bold transition-all hover:bg-orange-500 hover:text-white"
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#f27f0d';
-              e.currentTarget.style.color = 'white';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = '#f27f0d';
-            }}
-          >
-            Load More Recipes
-            <span className="material-symbols-outlined">expand_more</span>
-          </button>
-        </div>
+        {recipes.length > 0 && !loading && (
+          <div className="flex justify-center py-8">
+            <button
+              style={{ borderColor: '#f27f0d', color: '#f27f0d' }}
+              className="flex items-center gap-2 px-8 py-3 rounded-full border-2 font-bold transition-all hover:bg-orange-500 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
+              onMouseEnter={(e) => {
+                if (!loading) {
+                  e.currentTarget.style.backgroundColor = '#f27f0d';
+                  e.currentTarget.style.color = 'white';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = '#f27f0d';
+              }}
+            >
+              Load More Recipes
+              <span className="material-symbols-outlined">expand_more</span>
+            </button>
+          </div>
+        )}
       </main>
 
       {/* Footer */}

@@ -9,9 +9,10 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.nd.dishhub.model.RecipeIngredientEntity;
+import com.nd.dishhub.model.RecipeIngredientId;
 
 @Repository
-public interface RecipeIngredientRepository extends JpaRepository<RecipeIngredientEntity, Long> {
+public interface RecipeIngredientRepository extends JpaRepository<RecipeIngredientEntity, RecipeIngredientId> {
 
     /**
      * Tìm tất cả RecipeIngredient của một recipe

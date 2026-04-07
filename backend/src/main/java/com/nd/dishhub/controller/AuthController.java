@@ -3,24 +3,25 @@ package com.nd.dishhub.controller;
 import com.nd.dishhub.DTO.request.LoginRequest;
 import com.nd.dishhub.DTO.request.RegisterRequest;
 import com.nd.dishhub.DTO.response.AuthResponse;
+import com.nd.dishhub.DTO.response.UserResponse;
 import com.nd.dishhub.service.AuthService;
+import com.nd.dishhub.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/v1/auth")
+@RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 @Tag(name = "Authentication", description = "APIs for user authentication")
 public class AuthController {
 
     private final AuthService authService;
+    private final UserService userService;
 
     @PostMapping("/register")
     @Operation(summary = "Register a new user", description = "Creates a new user account with email authentication")
@@ -37,6 +38,26 @@ public class AuthController {
     @ApiResponse(responseCode = "401", description = "Invalid credentials")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
         AuthResponse response = authService.login(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/me")
+    @Operation(summary = "Get current user", description = "Retrieves information about the currently authenticated user")
+    @ApiResponse(responseCode = "200", description = "User information retrieved")
+    @ApiResponse(responseCode = "401", description = "Unauthorized")
+    public ResponseEntity<UserResponse> getCurrentUser() {
+        // Lấy email từ SecurityContextHolder (JWT authentication)
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401).build();
+        }
+        
+        String email = authentication.getName();
+        if (email == null || "anonymousUser".equals(email)) {
+            return ResponseEntity.status(401).build();
+        }
+        
+        UserResponse response = userService.getByEmail(email);
         return ResponseEntity.ok(response);
     }
 }

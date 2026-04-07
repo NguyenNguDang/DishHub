@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '../common/Button';
+import { Button } from '../common';
 
 interface HeaderProps {
   isLoggedIn: boolean;

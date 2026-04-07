@@ -16,7 +16,7 @@ interface CategoryGroup {
 }
 
 const ShoppingListPage: React.FC = () => {
-  const [currentWeek, setCurrentWeek] = useState('Oct 23 — Oct 29, 2023');
+  const [currentWeek] = useState('Oct 23 — Oct 29, 2023');
   const [activeFilter, setActiveFilter] = useState<'all' | 'completed'>('all');
   
   const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([
@@ -81,43 +81,6 @@ const ShoppingListPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white dark:bg-slate-900 flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-50 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <div style={{ backgroundColor: '#f27f0d' }} className="w-10 h-10 rounded-lg flex items-center justify-center text-white">
-            <span className="material-symbols-outlined">restaurant_menu</span>
-          </div>
-          <div>
-            <h2 className="text-xl font-bold leading-tight tracking-tight dark:text-white">DishHub</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Your kitchen companion</p>
-          </div>
-        </div>
-        
-        <nav className="hidden md:flex items-center gap-6">
-          <a className="flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-orange-500 font-medium transition-colors" href="#">
-            <span className="material-symbols-outlined text-[20px]">home</span>
-            <span>Home</span>
-          </a>
-          <a className="flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-orange-500 font-medium transition-colors" href="#">
-            <span className="material-symbols-outlined text-[20px]">skillet</span>
-            <span>Recipes</span>
-          </a>
-          <a className="flex items-center gap-2 text-orange-500 font-bold transition-colors" href="#">
-            <span className="material-symbols-outlined text-[20px]" style={{ fill: '1' }}>shopping_basket</span>
-            <span>Shopping List</span>
-          </a>
-        </nav>
-
-        <div className="flex items-center gap-3">
-          <button className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 relative">
-            <span className="material-symbols-outlined">notifications</span>
-            <span className="absolute top-2 right-2 w-2 h-2 bg-orange-500 rounded-full border-2 border-white dark:border-slate-900"></span>
-          </button>
-          <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-orange-500/20 bg-gradient-to-br from-blue-400 to-purple-500">
-            <img className="w-full h-full object-cover" alt="User profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_REd6cQgRzQrZbqYhWlIbohD-Wg_SOa_lxzUWmcqIBk2udydRbSzIv_Z07Gqi6-KGtjsHMfbExQ0DhkrRjFJoEB45eYEOQYw6eGghPQ4PiHPjUVWu9gJlKLTYer2IJ_3_8k7odHvc_QSz9cf-VkT3oEJdrLrLQmmeSIQlpgLh2eUw0OFDhxvMbW9EbfhTvTWng_5S3lMb8awmNx85i_-OkWiUfSOSS8OS63ljUdWwgwrCyUHoaRY8KloFR-lwKHEk0Qc3FIy3iu1I" />
-          </div>
-        </div>
-      </header>
 
       {/* Main Content */}
       <main className="flex-grow p-6">

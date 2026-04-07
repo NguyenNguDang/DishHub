@@ -25,7 +25,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.findByEmail(request.email()).isPresent()) {
+        String email = request.email().toLowerCase().trim();
+        
+        if (userRepository.findByEmail(email).isPresent()) {
             throw new RuntimeException("Email has already been taken!");
         }
 
@@ -33,27 +35,30 @@ public class AuthServiceImpl implements AuthService {
         UserEntity user = new UserEntity();
         user.setFirstName(request.firstName());
         user.setLastName(request.lastName());
-        user.setAge(request.age());
-        user.setWeight(request.weight());
-        user.setHeight(request.height());
-        user.setEmail(request.email());
+        user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         userRepository.save(user);
 
         // Tạo token
         String token = jwtUtil.generateToken(user.getEmail());
-        return new AuthResponse(token);
+        return new AuthResponse(user, token);
     }
 
     @Override
     public AuthResponse login(LoginRequest request) {
+        String email = request.email().toLowerCase().trim();
+        
         // Xác thực
         Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(request.email(), request.password())
+            new UsernamePasswordAuthenticationToken(email, request.password())
         );
 
+        // Lấy user từ database
+        UserEntity user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
         // Tạo token
-        String token = jwtUtil.generateToken(authentication.getName());
-        return new AuthResponse(token);
+        String token = jwtUtil.generateToken(user.getEmail());
+        return new AuthResponse(user, token);
     }
 }

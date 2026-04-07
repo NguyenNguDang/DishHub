@@ -22,8 +22,7 @@ interface Day {
 }
 
 const WeeklyMealPlannerPage: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [days, setDays] = useState<Day[]>([
+  const [days] = useState<Day[]>([
     {
       name: 'Monday',
       calories: 2100,
@@ -123,43 +122,6 @@ const WeeklyMealPlannerPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark">
-      {/* Navigation */}
-      <header className="sticky top-0 z-50 flex items-center justify-between whitespace-nowrap border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-10 py-3">
-        <div className="flex items-center gap-8">
-          <div className="flex items-center gap-4 text-orange-500">
-            <div className="w-6 h-6">
-              <svg fill="currentColor" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                <path clipRule="evenodd" d="M24 4H6V17.3333V30.6667H24V44H42V30.6667V17.3333H24V4Z" fillRule="evenodd"></path>
-              </svg>
-            </div>
-            <h2 className="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight">DishHub</h2>
-          </div>
-          
-          <label className="flex flex-col min-w-40 h-10 max-w-64">
-            <div className="flex w-full flex-1 items-stretch rounded-lg h-full overflow-hidden">
-              <div className="text-slate-500 bg-slate-100 dark:bg-slate-800 flex items-center justify-center pl-4">
-                <span className="material-symbols-outlined text-[20px]">search</span>
-              </div>
-              <input
-                className="flex w-full border-none bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-0 h-full placeholder:text-slate-500 px-4 pl-2 text-sm font-normal"
-                placeholder="Search recipes..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </label>
-        </div>
-
-        <div className="flex flex-1 justify-end gap-8 items-center">
-          <nav className="flex items-center gap-9">
-            <a className="text-slate-700 dark:text-slate-300 text-sm font-medium hover:text-orange-500 transition-colors" href="#">Home</a>
-            <a className="text-orange-500 text-sm font-bold border-b-2 border-orange-500" href="#">Recipes</a>
-            <a className="text-slate-700 dark:text-slate-300 text-sm font-medium hover:text-orange-500 transition-colors" href="#">Orders</a>
-            <a className="text-slate-700 dark:text-slate-300 text-sm font-medium hover:text-orange-500 transition-colors" href="#">Profile</a>
-          </nav>
-          <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-10 h-10 ring-2 ring-orange-500/20 bg-gradient-to-br from-blue-400 to-purple-500"></div>
-        </div>
-      </header>
 
       {/* Main Content */}
       <main className="flex flex-col px-4 md:px-10 py-8 max-w-[1440px] mx-auto w-full">

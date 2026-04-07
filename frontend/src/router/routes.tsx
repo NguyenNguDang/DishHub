@@ -1,7 +1,7 @@
 import type { RouteObject } from 'react-router-dom';
 import { createBrowserRouter, Outlet } from 'react-router-dom';
-import { MainLayout } from '../components/layout';
-import { AuthProvider } from '../store/AuthContext';
+import { MainLayout } from '../components';
+import { AuthProvider } from '../store';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
 import RecipeExplorerPage from '../pages/RecipeExplorerPage';
@@ -9,6 +9,7 @@ import RecipeDetailPage from '../pages/RecipeDetailPage';
 import ShoppingListPage from '../pages/ShoppingListPage';
 import { UserProfilePage } from '../pages/UserProfilePage';
 import WeeklyMealPlannerPage from '../pages/WeeklyMealPlannerPage';
+import MyRecipesPage from '../pages/MyRecipesPage';
 import { NotFound } from '../pages/NotFoundPage';
 import { useAuthStore } from '../store';
 
@@ -36,9 +37,13 @@ const RootLayoutWithAuth = () => {
   );
 };
 
-// Auth-free layout (cho login/register)
-const AuthLayout = () => {
-  return <Outlet />;
+// Auth layout với AuthProvider
+const AuthLayoutWithProvider = () => {
+  return (
+    <AuthProvider>
+      <Outlet />
+    </AuthProvider>
+  );
 };
 
 export const routes: RouteObject[] = [
@@ -59,6 +64,10 @@ export const routes: RouteObject[] = [
         element: <RecipeDetailPage />,
       },
       {
+        path: '/my-recipes',
+        element: <MyRecipesPage />,
+      },
+      {
         path: '/shopping-list',
         element: <ShoppingListPage />,
       },
@@ -74,7 +83,7 @@ export const routes: RouteObject[] = [
   },
   {
     path: '/',
-    element: <AuthLayout />,
+    element: <AuthLayoutWithProvider />,
     children: [
       {
         path: '/login',

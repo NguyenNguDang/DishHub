@@ -31,7 +31,7 @@ public class JwtFilter extends OncePerRequestFilter {
         
         String requestURI = request.getRequestURI();
         
-        // Skip JWT validation cho public endpoints
+        //Skip JWT validation cho public endpoints
         if (isPublicEndpoint(requestURI)) {
             chain.doFilter(request, response);
             return;
@@ -68,7 +68,8 @@ public class JwtFilter extends OncePerRequestFilter {
                 "/v3/api-docs",
                 "/swagger-ui",
                 "/swagger-resources",
-                "/api/v1/auth",
+                "/api/v1/auth/login",
+                "/api/v1/auth/register",
                 "/api/v1/ingredients",
                 "/error"
         };
