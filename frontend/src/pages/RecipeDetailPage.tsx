@@ -1,89 +1,122 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-
-interface Ingredient {
-  id: string;
-  name: string;
-  checked: boolean;
-}
-
-interface Instruction {
-  number: number;
-  title: string;
-  description: string;
-}
-
-interface Review {
-  id: string;
-  author: string;
-  avatar: string;
-  timestamp: string;
-  rating: number;
-  comment: string;
-}
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { recipeService, type Review, type ReviewRequest } from '../services';
+import type { Recipe } from '../types';
 
 const RecipeDetailPage: React.FC = () => {
-  const [ingredients, setIngredients] = useState<Ingredient[]>([
-    { id: '1', name: '2 Fresh Salmon Fillets (6oz each)', checked: false },
-    { id: '2', name: '2 tbsp White Miso Paste', checked: false },
-    { id: '3', name: '1 tbsp Mirin', checked: false },
-    { id: '4', name: '1 tbsp Honey or Maple Syrup', checked: false },
-    { id: '5', name: '1 cup Jasmine Rice', checked: false },
-    { id: '6', name: '1 cup Steamed Bok Choy', checked: false },
-    { id: '7', name: '1 tsp Sesame Seeds', checked: false },
-    { id: '8', name: 'Green onions, thinly sliced', checked: false },
-  ]);
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [checkedIngredients, setCheckedIngredients] = useState<Set<string>>(new Set());
+  const [reviewText, setReviewText] = useState('');
+  const [reviewRating, setReviewRating] = useState(5);
 
-  const instructions: Instruction[] = [
-    {
-      number: 1,
-      title: 'Prepare the Glaze',
-      description: 'In a small bowl, whisk together the miso paste, mirin, honey, and a splash of soy sauce until smooth. If the miso is too thick, add a teaspoon of warm water.',
+  // Fetch recipe detail
+  const { data: recipe, isLoading, error } = useQuery({
+    queryKey: ['recipe', id],
+    queryFn: async () => {
+      if (!id) throw new Error('Recipe ID not found');
+      console.log('📥 Fetching recipe:', id);
+      return await recipeService.getById(id);
     },
-    {
-      number: 2,
-      title: 'Marinate Salmon',
-      description: 'Pat the salmon fillets dry. Brush the glaze generously over the top and sides of the salmon. Let it marinate for at least 15 minutes at room temperature.',
-    },
-    {
-      number: 3,
-      title: 'Cook the Salmon',
-      description: 'Preheat your oven to 400°F (200°C). Place salmon on a parchment-lined baking sheet and bake for 12-15 minutes, or until the salmon flakes easily with a fork and the glaze is caramelized.',
-    },
-    {
-      number: 4,
-      title: 'Assemble the Bowl',
-      description: 'Divide the cooked jasmine rice between two bowls. Top with the salmon and steamed bok choy. Garnish with sesame seeds and green onions.',
-    },
-  ];
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const reviews: Review[] = [
-    {
-      id: '1',
-      author: 'Sarah Jenkins',
-      avatar: 'https://ui-avatars.com/api/?name=Sarah+Jenkins&background=3B82F6&color=fff',
-      timestamp: '2 days ago',
-      rating: 5,
-      comment: 'The glaze is absolutely divine! I didn\'t have mirin so I used a bit of rice vinegar and honey instead, turned out great. Definitely adding this to our weekly rotation.',
+  // Fetch reviews
+  const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
+    queryKey: ['reviews', id],
+    queryFn: async () => {
+      if (!id) throw new Error('Recipe ID not found');
+      console.log('📥 Fetching reviews for recipe:', id);
+      return await recipeService.getRecipeReviews(id);
     },
-    {
-      id: '2',
-      author: 'Marcus Wong',
-      avatar: 'https://ui-avatars.com/api/?name=Marcus+Wong&background=8B5CF6&color=fff',
-      timestamp: '1 week ago',
-      rating: 4,
-      comment: 'Excellent recipe. I broiled the salmon for the last 2 minutes to get that perfect char on the miso glaze. Make sure not to overcook the salmon!',
+    enabled: !!id,
+  });
+
+  // Create review mutation
+  const createReviewMutation = useMutation({
+    mutationFn: async (reviewData: ReviewRequest) => {
+      if (!id) throw new Error('Recipe ID not found');
+      return await recipeService.createReview(id, reviewData);
     },
-  ];
+    onSuccess: () => {
+      // Refetch reviews
+      queryClient.invalidateQueries({ queryKey: ['reviews', id] });
+      setReviewText('');
+      setReviewRating(5);
+      alert('✅ Review submitted successfully!');
+    },
+    onError: (error) => {
+      console.error('Error creating review:', error);
+      alert('❌ Failed to submit review. ' + (error instanceof Error ? error.message : ''));
+    },
+  });
 
-  const [commentText, setCommentText] = useState('');
+  const handleSubmitReview = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewRating || (reviewRating < 1 || reviewRating > 5)) {
+      alert('Please select a rating between 1 and 5');
+      return;
+    }
+    createReviewMutation.mutate({
+      rating: reviewRating,
+      comment: reviewText,
+    });
+  };
 
-  const toggleIngredient = (id: string) => {
-    setIngredients(items =>
-      items.map(item =>
-        item.id === id ? { ...item, checked: !item.checked } : item
-      )
+  if (!id) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-white dark:bg-slate-900">
+        <div className="text-center">
+          <p className="text-xl font-bold text-slate-900 dark:text-white">Recipe not found</p>
+          <Link to="/recipes" className="mt-4 inline-block text-orange-500 hover:text-orange-600">
+            ← Back to recipes
+          </Link>
+        </div>
+      </div>
     );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-white dark:bg-slate-900">
+        <div className="text-center">
+          <div className="mb-4 inline-block animate-spin">
+            <span className="material-symbols-outlined text-4xl text-orange-500">refresh</span>
+          </div>
+          <p className="text-lg font-semibold text-slate-600 dark:text-slate-300">Loading recipe...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !recipe) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-white dark:bg-slate-900">
+        <div className="text-center">
+          <span className="material-symbols-outlined mb-4 flex justify-center text-6xl text-red-500">error</span>
+          <p className="text-xl font-bold text-slate-900 dark:text-white">Failed to load recipe</p>
+          <p className="mt-2 text-slate-600 dark:text-slate-300">
+            {error instanceof Error ? error.message : 'Unknown error'}
+          </p>
+          <Link to="/recipes" className="mt-4 inline-block text-orange-500 hover:text-orange-600">
+            ← Back to recipes
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const toggleIngredient = (ingredientId: string) => {
+    const newChecked = new Set(checkedIngredients);
+    if (newChecked.has(ingredientId)) {
+      newChecked.delete(ingredientId);
+    } else {
+      newChecked.add(ingredientId);
+    }
+    setCheckedIngredients(newChecked);
   };
 
   const renderStars = (rating: number, size: string = 'text-lg') => {
@@ -104,19 +137,20 @@ const RecipeDetailPage: React.FC = () => {
     );
   };
 
+
   return (
     <div className="relative flex min-h-screen flex-col bg-background-light dark:bg-background-dark">
       {/* Navigation Bar */}
       <header className="sticky top-0 z-50 w-full border-b border-orange-500/10 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
-            <Link
-              to="/recipes"
+            <button
+              onClick={() => navigate('/recipes')}
               className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors"
-              title="Quay lại"
+              title="Go back"
             >
               <span className="material-symbols-outlined text-slate-600 dark:text-slate-300">arrow_back</span>
-            </Link>
+            </button>
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500 text-white">
               <span className="material-symbols-outlined text-xl">restaurant</span>
             </div>
@@ -129,8 +163,8 @@ const RecipeDetailPage: React.FC = () => {
             <button className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-colors">
               <span className="material-symbols-outlined">share</span>
             </button>
-            <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-orange-500/20 bg-gradient-to-br from-blue-400 to-purple-500">
-              <img alt="Profile" className="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhzin0mhRfIfHXVtP19gvjQnGHTyEYzalGQAhZCgRwqY3cgcNqgXAnj5wkZZXLUd3N--u0StRRkHbtfy5VQHRDBS9tcz0PDv6coPAvZxz6tgUn3mtZg1PSHWkHd63u0zdguv7jpRhDBc-6tdWFPT_EGYxhkAjtEYf_KXf_qOaCCQ_Ao2LEWZzqWzCsm2Y6372WTuSC65SdmxZdZ00YWjqsYUxriI39XCXTkNCWH7ap9VJnhJ-E1cyzvbEh9iGYhQRnGDH5QcAxNkhl" />
+            <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-orange-500/20">
+              <img alt="Profile" className="h-full w-full object-cover" src="https://ui-avatars.com/api/?name=User&background=random" />
             </div>
           </div>
         </div>
@@ -141,18 +175,19 @@ const RecipeDetailPage: React.FC = () => {
         <div className="relative mb-8 overflow-hidden rounded-xl bg-slate-200 shadow-xl lg:h-[450px]">
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent z-10"></div>
           <img
-            alt="Glazed Miso Salmon Bowl"
+            alt={recipe.title}
             className="h-full w-full object-cover"
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-CghtB1y1E_dWOWoQ9I6xPEnbCg0iRii97DYSN-PUZhpQ4czT2-Z_nasBdjDOtfvlXyg809vbNAeMIM9EIBGve7drI9XlT3mHYME0kMRlhQ2iEUq4jBAjWj_38RFcxBV5F8f1NKkP_7ftCTUIwTtOnrlyn30KU6ZgL-juKVMKyVadVR78NNMcUvzZRkG3pmx2koQ1FWXq8j_qZ0WCM2enZ2OBZS2Xw7jA3LkzFR8_5TCZijxOnbmpB9AuYpxIwgvS7o_K9tBXNodr"
+            src={recipe.image || 'https://via.placeholder.com/1200x450'}
           />
           <div className="absolute bottom-0 left-0 z-20 w-full p-6 md:p-10">
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div>
                 <nav className="mb-2 flex gap-2 text-sm font-medium text-white/80">
-                  <span style={{ backgroundColor: '#f27f0d' }} className="rounded px-2 py-0.5 text-xs text-white">Main Course</span>
-                  <span className="rounded bg-white/20 px-2 py-0.5 text-xs backdrop-blur-sm">Japanese Fusion</span>
+                  <span style={{ backgroundColor: '#f27f0d' }} className="rounded px-2 py-0.5 text-xs text-white">
+                    {recipe.category || 'Recipe'}
+                  </span>
                 </nav>
-                <h2 className="text-3xl font-extrabold text-white md:text-5xl">Glazed Miso Salmon Bowl</h2>
+                <h2 className="text-3xl font-extrabold text-white md:text-5xl">{recipe.title}</h2>
               </div>
               <div className="flex flex-wrap gap-3">
                 <button
@@ -161,10 +196,6 @@ const RecipeDetailPage: React.FC = () => {
                 >
                   <span className="material-symbols-outlined">calendar_today</span>
                   Add to Meal Plan
-                </button>
-                <button className="flex items-center gap-2 rounded-lg border-2 border-white bg-white/10 px-6 py-3 font-bold text-white backdrop-blur-md transition-all hover:bg-white hover:text-orange-500">
-                  <span className="material-symbols-outlined">fork_right</span>
-                  Fork Recipe
                 </button>
               </div>
             </div>
@@ -178,33 +209,23 @@ const RecipeDetailPage: React.FC = () => {
               <span className="material-symbols-outlined text-orange-500">schedule</span>
               <div>
                 <p className="text-xs uppercase tracking-wider text-slate-500">Prep Time</p>
-                <p className="font-bold dark:text-white">25 Mins</p>
+                <p className="font-bold dark:text-white">{recipe.prepTime || 0} Mins</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-orange-500">bar_chart</span>
-              <div>
-                <p className="text-xs uppercase tracking-wider text-slate-500">Difficulty</p>
-                <p className="font-bold dark:text-white">Intermediate</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-orange-500">group</span>
+              <span className="material-symbols-outlined text-orange-500">restaurant</span>
               <div>
                 <p className="text-xs uppercase tracking-wider text-slate-500">Servings</p>
-                <p className="font-bold dark:text-white">2 People</p>
+                <p className="font-bold dark:text-white">{recipe.servings || 2} People</p>
               </div>
             </div>
-          </div>
-          <div className="flex items-center gap-3 border-l border-slate-200 pl-4 dark:border-slate-800">
-            <div className="text-right">
-              <p className="text-sm font-bold text-slate-900 dark:text-white">Recipe Visibility</p>
-              <p className="text-xs text-slate-500">Public visibility enabled</p>
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-orange-500">star</span>
+              <div>
+                <p className="text-xs uppercase tracking-wider text-slate-500">Rating</p>
+                <p className="font-bold dark:text-white">{recipe.rating || 0} ⭐</p>
+              </div>
             </div>
-            <label className="relative inline-flex cursor-pointer items-center">
-              <input defaultChecked className="peer sr-only" type="checkbox" />
-              <div className="peer h-7 w-12 rounded-full bg-slate-200 after:absolute after:left-[4px] after:top-[4px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-orange-500 peer-checked:after:translate-x-full dark:bg-slate-700"></div>
-            </label>
           </div>
         </div>
 
@@ -217,21 +238,25 @@ const RecipeDetailPage: React.FC = () => {
                 <span className="material-symbols-outlined text-orange-500">shopping_basket</span>
                 Ingredients
               </h3>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {ingredients.map(ingredient => (
-                  <label key={ingredient.id} className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-orange-500/5 dark:border-slate-800 cursor-pointer transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={ingredient.checked}
-                      onChange={() => toggleIngredient(ingredient.id)}
-                      className="h-5 w-5 rounded border-slate-300 text-orange-500 focus:ring-orange-500 accent-orange-500"
-                    />
-                    <span className={`${ingredient.checked ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-300'}`}>
-                      {ingredient.name}
-                    </span>
-                  </label>
-                ))}
-              </div>
+              {recipe.ingredients && recipe.ingredients.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {recipe.ingredients.map(ingredient => (
+                    <label key={ingredient.id} className="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-orange-500/5 dark:border-slate-800 cursor-pointer transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={checkedIngredients.has(ingredient.id.toString())}
+                        onChange={() => toggleIngredient(ingredient.id.toString())}
+                        className="h-5 w-5 rounded border-slate-300 text-orange-500 focus:ring-orange-500 accent-orange-500"
+                      />
+                      <span className={`${checkedIngredients.has(ingredient.id.toString()) ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-300'}`}>
+                        {ingredient.name}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-slate-500 dark:text-slate-400">No ingredients available</p>
+              )}
             </section>
 
             {/* Instructions */}
@@ -240,19 +265,13 @@ const RecipeDetailPage: React.FC = () => {
                 <span className="material-symbols-outlined text-orange-500">list_alt</span>
                 Instructions
               </h3>
-              <div className="space-y-8">
-                {instructions.map(instruction => (
-                  <div key={instruction.number} className="flex gap-4">
-                    <div style={{ backgroundColor: '#f27f0d' }} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-bold text-white">
-                      {instruction.number}
-                    </div>
-                    <div className="space-y-2">
-                      <h4 className="text-lg font-bold dark:text-white">{instruction.title}</h4>
-                      <p className="leading-relaxed text-slate-600 dark:text-slate-400">{instruction.description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              {recipe.instructions ? (
+                <div className="space-y-8">
+                  <p className="text-slate-600 dark:text-slate-400">{recipe.instructions}</p>
+                </div>
+              ) : (
+                <p className="text-slate-500 dark:text-slate-400">No instructions available</p>
+              )}
             </section>
           </div>
 
@@ -264,19 +283,19 @@ const RecipeDetailPage: React.FC = () => {
               <p className="mb-6 text-sm text-slate-500">Approximate values per serving</p>
               <div className="grid grid-cols-2 gap-4">
                 <div className="rounded-lg bg-orange-500/5 p-4 text-center">
-                  <p className="text-2xl font-bold text-orange-500">540</p>
+                  <p className="text-2xl font-bold text-orange-500">{recipe.nutrition?.totalCalories || 0}</p>
                   <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Calories</p>
                 </div>
                 <div className="rounded-lg bg-slate-50 p-4 text-center dark:bg-slate-800">
-                  <p className="text-2xl font-bold text-slate-900 dark:text-white">34g</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{recipe.nutrition?.totalProtein || 0}g</p>
                   <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Protein</p>
                 </div>
                 <div className="rounded-lg bg-slate-50 p-4 text-center dark:bg-slate-800">
-                  <p className="text-2xl font-bold text-slate-900 dark:text-white">22g</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{recipe.nutrition?.totalFat || 0}g</p>
                   <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Fat</p>
                 </div>
                 <div className="rounded-lg bg-slate-50 p-4 text-center dark:bg-slate-800">
-                  <p className="text-2xl font-bold text-slate-900 dark:text-white">48g</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{recipe.nutrition?.totalCarbs || 0}g</p>
                   <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Carbs</p>
                 </div>
               </div>
@@ -284,13 +303,11 @@ const RecipeDetailPage: React.FC = () => {
 
             {/* Tags */}
             <section className="rounded-xl bg-white p-6 shadow-sm dark:bg-slate-900">
-              <h3 className="mb-4 text-xl font-bold dark:text-white">Tags</h3>
-              <div className="flex flex-wrap gap-2">
-                {['#HighProtein', '#Dinner', '#Omega3', '#Japanese'].map(tag => (
-                  <span key={tag} className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                    {tag}
-                  </span>
-                ))}
+              <h3 className="mb-4 text-xl font-bold dark:text-white">Recipe Info</h3>
+              <div className="space-y-2 text-sm">
+                <p><span className="font-semibold text-slate-700 dark:text-slate-300">Category:</span> <span className="text-slate-600 dark:text-slate-400">{recipe.category || 'N/A'}</span></p>
+                <p><span className="font-semibold text-slate-700 dark:text-slate-300">Cook Time:</span> <span className="text-slate-600 dark:text-slate-400">{recipe.cookTime || 0} mins</span></p>
+                <p><span className="font-semibold text-slate-700 dark:text-slate-300">Difficulty:</span> <span className="text-slate-600 dark:text-slate-400">{recipe.difficulty || 'N/A'}</span></p>
               </div>
             </section>
           </aside>
@@ -302,55 +319,96 @@ const RecipeDetailPage: React.FC = () => {
             <div>
               <h3 className="text-2xl font-bold dark:text-white">Ratings & Comments</h3>
               <div className="mt-3 flex items-center gap-2">
-                {renderStars(4.8)}
-                <span className="font-bold dark:text-white">4.8</span>
-                <span className="text-slate-500">(124 reviews)</span>
-              </div>
-            </div>
-            <button className="rounded-lg bg-orange-500/10 px-6 py-2 font-bold text-orange-500 transition-colors hover:bg-orange-500/20">
-              Write a Review
-            </button>
-          </div>
-
-          {/* Comment Input */}
-          <div className="mb-10 flex gap-4">
-            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-green-400 to-blue-500"></div>
-            <div className="flex-1">
-              <textarea
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 p-4 focus:border-orange-500 focus:ring-orange-500 dark:border-slate-800 dark:bg-slate-800 dark:text-white placeholder:text-slate-500"
-                placeholder="Share your experience making this recipe..."
-                rows={3}
-              />
-              <div className="mt-2 flex justify-end">
-                <button style={{ backgroundColor: '#f27f0d' }} className="rounded-lg px-4 py-2 text-sm font-bold text-white shadow-md transition-opacity hover:opacity-90">
-                  Post Comment
-                </button>
+                {renderStars(recipe.rating || 0)}
+                <span className="font-bold dark:text-white">{recipe.rating || 0}</span>
+                <span className="text-slate-500">({reviewsData?.content.length || 0} reviews)</span>
               </div>
             </div>
           </div>
 
-          {/* Review List */}
-          <div className="space-y-8">
-            {reviews.map(review => (
-              <div key={review.id} className="flex gap-4 border-b border-slate-100 pb-8 dark:border-slate-800">
-                <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-slate-200">
-                  <img alt={review.author} className="h-full w-full object-cover" src={review.avatar} />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-bold dark:text-white">{review.author}</h4>
-                    <span className="text-sm text-slate-500">{review.timestamp}</span>
-                  </div>
-                  <div className="mt-1">
-                    {renderStars(review.rating, 'text-xs')}
-                  </div>
-                  <p className="mt-2 text-slate-600 dark:text-slate-400">{review.comment}</p>
+          {/* Comment Input Form */}
+          <div className="mb-10 rounded-lg bg-slate-50 p-4 dark:bg-slate-800">
+            <h4 className="mb-4 font-bold text-slate-900 dark:text-white">Write a Review</h4>
+            <form onSubmit={handleSubmitReview} className="space-y-4">
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Rating</label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setReviewRating(i)}
+                      className={`text-2xl transition-colors ${
+                        i <= reviewRating ? 'text-orange-500' : 'text-slate-300'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined" style={{ fill: '1' }}>
+                        star
+                      </span>
+                    </button>
+                  ))}
                 </div>
               </div>
-            ))}
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Comment</label>
+                <textarea
+                  value={reviewText}
+                  onChange={(e) => setReviewText(e.target.value)}
+                  className="w-full rounded-lg border border-slate-200 bg-white p-3 text-slate-900 placeholder-slate-400 focus:border-orange-500 focus:ring-orange-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                  placeholder="Share your experience making this recipe..."
+                  rows={3}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={createReviewMutation.isPending}
+                style={{ backgroundColor: '#f27f0d' }}
+                className="w-full rounded-lg px-4 py-2 font-bold text-white shadow-md transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {createReviewMutation.isPending ? '⏳ Submitting...' : '✓ Post Review'}
+              </button>
+            </form>
           </div>
+
+          {/* Reviews List */}
+          {reviewsLoading ? (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin">
+                <span className="material-symbols-outlined text-2xl text-orange-500">refresh</span>
+              </div>
+              <p className="mt-2 text-slate-500">Loading reviews...</p>
+            </div>
+          ) : reviewsData?.content && reviewsData.content.length > 0 ? (
+            <div className="space-y-6">
+              {reviewsData.content.map((review: Review) => (
+                <div key={review.id} className="flex gap-4 border-b border-slate-100 pb-6 dark:border-slate-800">
+                  <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-slate-200">
+                    <img
+                      alt={review.userName}
+                      className="h-full w-full object-cover"
+                      src={review.userAvatar || `https://ui-avatars.com/api/?name=${review.userName}`}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-slate-900 dark:text-white">{review.userName}</h4>
+                      <span className="text-sm text-slate-500">{new Date(review.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <div className="mt-1">
+                      {renderStars(review.rating, 'text-sm')}
+                    </div>
+                    {review.comment && (
+                      <p className="mt-2 text-slate-600 dark:text-slate-400">{review.comment}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-slate-500 dark:text-slate-400">No reviews yet. Be the first to review!</p>
+            </div>
+          )}
         </section>
       </main>
 

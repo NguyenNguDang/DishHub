@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -16,7 +17,23 @@ public class RecipeResponse {
 
     private String title;
 
-    private String instructions;
+    private String description;
+
+    private String image;
+
+    private Integer prepTime;
+
+    private Integer cookTime;
+
+    private Integer servings;
+
+    private String difficulty;
+
+    private String category;
+
+    private List<String> tags;
+
+    private List<String> instructions;
 
     private Boolean isPublic;
 

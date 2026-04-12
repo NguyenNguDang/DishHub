@@ -1,8 +1,8 @@
 package com.nd.dishhub.DTO.response;
 
-import com.nd.dishhub.model.UserEntity;
+import com.nd.dishhub.DTO.UserDTO;
 
 public record AuthResponse(
-    UserEntity user,
+    UserDTO user,
     String token
 ) {}

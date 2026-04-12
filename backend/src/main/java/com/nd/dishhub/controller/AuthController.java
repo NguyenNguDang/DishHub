@@ -51,12 +51,12 @@ public class AuthController {
         if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.status(401).build();
         }
-        
+
         String email = authentication.getName();
         if (email == null || "anonymousUser".equals(email)) {
             return ResponseEntity.status(401).build();
         }
-        
+
         UserResponse response = userService.getByEmail(email);
         return ResponseEntity.ok(response);
     }

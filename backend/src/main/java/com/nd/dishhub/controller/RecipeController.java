@@ -2,14 +2,18 @@ package com.nd.dishhub.controller;
 
 import com.nd.dishhub.DTO.request.IngredientQuantityRequest;
 import com.nd.dishhub.DTO.request.RecipeRequest;
+import com.nd.dishhub.DTO.request.ReviewRequest;
 import com.nd.dishhub.DTO.response.RecipeResponse;
+import com.nd.dishhub.DTO.response.ReviewResponse;
 import com.nd.dishhub.exception.UnauthorizedException;
 import com.nd.dishhub.model.UserEntity;
 import com.nd.dishhub.repository.UserRepository;
 import com.nd.dishhub.service.RecipeService;
+import com.nd.dishhub.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +28,7 @@ import java.util.List;
 public class RecipeController {
 
     private final RecipeService recipeService;
+    private final ReviewService reviewService;
     private final UserRepository userRepository;
 
     @PostMapping
@@ -66,13 +71,36 @@ public class RecipeController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<RecipeResponse>> getAll(Pageable pageable) {
+    public ResponseEntity<Page<RecipeResponse>> getAll(
+            @RequestParam(required = false) String userId,
+            Pageable pageable,
+            Principal principal) {
         try {
+            // If userId=me, get current authenticated user's recipes
+            if ("me".equals(userId)) {
+                UserEntity user = userRepository.findByEmail(principal.getName())
+                        .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+                Page<RecipeResponse> response = recipeService.getRecipesByUser(user.getId(), pageable);
+                return ResponseEntity.ok(response);
+            }
+
+            // If userId is specified and is numeric, get that user's recipes
+            if (userId != null) {
+                try {
+                    Long userIdLong = Long.parseLong(userId);
+                    Page<RecipeResponse> response = recipeService.getRecipesByUser(userIdLong, pageable);
+                    return ResponseEntity.ok(response);
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Invalid userId format");
+                }
+            }
+
+            // Otherwise, get all recipes
             Page<RecipeResponse> response = recipeService.getAll(pageable);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             // If sort parameter is invalid, use default Pageable without sort
-            pageable = org.springframework.data.domain.PageRequest.of(
+            pageable = PageRequest.of(
                     Math.max(pageable.getPageNumber(), 0),
                     pageable.getPageSize() > 0 ? pageable.getPageSize() : 10
             );
@@ -87,11 +115,45 @@ public class RecipeController {
             Page<RecipeResponse> response = recipeService.getPublicRecipes(pageable);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            pageable = org.springframework.data.domain.PageRequest.of(
+            pageable = PageRequest.of(
                     Math.max(pageable.getPageNumber(), 0),
                     pageable.getPageSize() > 0 ? pageable.getPageSize() : 10
             );
             Page<RecipeResponse> response = recipeService.getPublicRecipes(pageable);
+            return ResponseEntity.ok(response);
+        }
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<RecipeResponse>> searchRecipes(
+            @RequestParam String query,
+            Pageable pageable) {
+        try {
+            Page<RecipeResponse> response = recipeService.searchRecipes(query, pageable);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            pageable = PageRequest.of(
+                    Math.max(pageable.getPageNumber(), 0),
+                    pageable.getPageSize() > 0 ? pageable.getPageSize() : 10
+            );
+            Page<RecipeResponse> response = recipeService.searchRecipes(query, pageable);
+            return ResponseEntity.ok(response);
+        }
+    }
+
+    @GetMapping("/category")
+    public ResponseEntity<Page<RecipeResponse>> getRecipesByCategory(
+            @RequestParam String category,
+            Pageable pageable) {
+        try {
+            Page<RecipeResponse> response = recipeService.getRecipesByCategory(category, pageable);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            pageable = PageRequest.of(
+                    Math.max(pageable.getPageNumber(), 0),
+                    pageable.getPageSize() > 0 ? pageable.getPageSize() : 10
+            );
+            Page<RecipeResponse> response = recipeService.getRecipesByCategory(category, pageable);
             return ResponseEntity.ok(response);
         }
     }
@@ -102,7 +164,7 @@ public class RecipeController {
             Page<RecipeResponse> response = recipeService.getRecipesByUser(userId, pageable);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            pageable = org.springframework.data.domain.PageRequest.of(
+            pageable = PageRequest.of(
                     Math.max(pageable.getPageNumber(), 0),
                     pageable.getPageSize() > 0 ? pageable.getPageSize() : 10
             );
@@ -150,12 +212,44 @@ public class RecipeController {
             Page<RecipeResponse> response = recipeService.getMyCustomRecipes(user.getId(), pageable);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            pageable = org.springframework.data.domain.PageRequest.of(
+            pageable = PageRequest.of(
                     Math.max(pageable.getPageNumber(), 0),
                     pageable.getPageSize() > 0 ? pageable.getPageSize() : 10
             );
             Page<RecipeResponse> response = recipeService.getMyCustomRecipes(user.getId(), pageable);
             return ResponseEntity.ok(response);
         }
+    }
+
+    // ==================== REVIEW ENDPOINTS ====================
+
+    @GetMapping("/{id}/reviews")
+    public ResponseEntity<Page<ReviewResponse>> getRecipeReviews(
+            @PathVariable Long id,
+            Pageable pageable) {
+        try {
+            Page<ReviewResponse> response = reviewService.getRecipeReviews(id, pageable);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            pageable = PageRequest.of(
+                    Math.max(pageable.getPageNumber(), 0),
+                    pageable.getPageSize() > 0 ? pageable.getPageSize() : 10
+            );
+            Page<ReviewResponse> response = reviewService.getRecipeReviews(id, pageable);
+            return ResponseEntity.ok(response);
+        }
+    }
+
+    @PostMapping("/{id}/reviews")
+    public ResponseEntity<ReviewResponse> createRecipeReview(
+            @PathVariable Long id,
+            @Valid @RequestBody ReviewRequest request,
+            Principal principal) {
+        // Get userId from authenticated user
+        UserEntity user = userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+        
+        ReviewResponse response = reviewService.createReview(id, request, user.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

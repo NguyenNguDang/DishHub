@@ -49,9 +49,9 @@ class UserServiceImplUnitTest {
                 .firstName("John")
                 .lastName("Doe")
                 .passwordHash("hashed_password")
-                .Age(30)
-                .Weight(75.5f)
-                .Height(180.0f)
+                .age(30)
+                .weight(75.5f)
+                .height(180.0f)
                 .isActive(true)
                 .build();
         testUserEntity.setId(1L);
@@ -162,9 +162,9 @@ class UserServiceImplUnitTest {
                 .firstName("Alice")
                 .lastName("Brown")
                 .passwordHash("hashed_password")
-                .Age(25)
-                .Weight(60.0f)
-                .Height(165.0f)
+                .age(25)
+                .weight(60.0f)
+                .height(165.0f)
                 .isActive(true)
                 .build();
         user2.setId(2L);
@@ -214,9 +214,9 @@ class UserServiceImplUnitTest {
                 .firstName("Jane")
                 .lastName("Smith")
                 .passwordHash("hashed_password")
-                .Age(28)
-                .Weight(65.0f)
-                .Height(170.0f)
+                .age(28)
+                .weight(65.0f)
+                .height(170.0f)
                 .isActive(true)
                 .build();
         updatedUserEntity.setId(userId);
@@ -274,9 +274,9 @@ class UserServiceImplUnitTest {
                 .firstName("Robert")
                 .lastName("Johnson")
                 .passwordHash("hashed_password")
-                .Age(35)
-                .Weight(80.0f)
-                .Height(185.0f)
+                .age(35)
+                .weight(80.0f)
+                .height(185.0f)
                 .isActive(true)
                 .build();
         updatedUserEntity.setId(userId);
@@ -340,9 +340,9 @@ class UserServiceImplUnitTest {
                 .firstName("John")
                 .lastName("Doe")
                 .passwordHash("hashed_password")
-                .Age(30)
-                .Weight(75.5f)
-                .Height(180.0f)
+                .age(30)
+                .weight(75.5f)
+                .height(180.0f)
                 .isActive(true)
                 .build();
         activeUser.setId(userId);
@@ -352,9 +352,9 @@ class UserServiceImplUnitTest {
                 .firstName("John")
                 .lastName("Doe")
                 .passwordHash("hashed_password")
-                .Age(30)
-                .Weight(75.5f)
-                .Height(180.0f)
+                .age(30)
+                .weight(75.5f)
+                .height(180.0f)
                 .isActive(false)
                 .build();
         inactiveUser.setId(userId);
@@ -398,9 +398,9 @@ class UserServiceImplUnitTest {
                 .firstName("John")
                 .lastName("Doe")
                 .passwordHash("hashed_password")
-                .Age(30)
-                .Weight(75.5f)
-                .Height(180.0f)
+                .age(30)
+                .weight(75.5f)
+                .height(180.0f)
                 .isActive(false)
                 .build();
         inactiveUser.setId(userId);
@@ -410,9 +410,9 @@ class UserServiceImplUnitTest {
                 .firstName("John")
                 .lastName("Doe")
                 .passwordHash("hashed_password")
-                .Age(30)
-                .Weight(75.5f)
-                .Height(180.0f)
+                .age(30)
+                .weight(75.5f)
+                .height(180.0f)
                 .isActive(true)
                 .build();
         activeUser.setId(userId);
@@ -454,9 +454,9 @@ class UserServiceImplUnitTest {
                 .firstName("John")
                 .lastName("Doe")
                 .passwordHash("hashed_password")
-                .Age(30)
-                .Weight(75.5f)
-                .Height(180.0f)
+                .age(30)
+                .weight(75.5f)
+                .height(180.0f)
                 .isActive(true)
                 .build();
         alreadyActiveUser.setId(userId);

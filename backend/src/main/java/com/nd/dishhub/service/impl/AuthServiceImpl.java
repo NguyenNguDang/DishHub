@@ -1,5 +1,6 @@
 package com.nd.dishhub.service.impl;
 
+import com.nd.dishhub.DTO.UserDTO;
 import com.nd.dishhub.DTO.response.AuthResponse;
 import com.nd.dishhub.DTO.request.LoginRequest;
 import com.nd.dishhub.DTO.request.RegisterRequest;
@@ -10,7 +11,6 @@ import com.nd.dishhub.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +26,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse register(RegisterRequest request) {
         String email = request.email().toLowerCase().trim();
-        
+
         if (userRepository.findByEmail(email).isPresent()) {
             throw new RuntimeException("Email has already been taken!");
         }
@@ -41,15 +41,16 @@ public class AuthServiceImpl implements AuthService {
 
         // Tạo token
         String token = jwtUtil.generateToken(user.getEmail());
-        return new AuthResponse(user, token);
+        UserDTO userDTO = convertToDTO(user);
+        return new AuthResponse(userDTO, token);
     }
 
     @Override
     public AuthResponse login(LoginRequest request) {
         String email = request.email().toLowerCase().trim();
-        
+
         // Xác thực
-        Authentication authentication = authenticationManager.authenticate(
+        authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(email, request.password())
         );
 
@@ -59,6 +60,23 @@ public class AuthServiceImpl implements AuthService {
 
         // Tạo token
         String token = jwtUtil.generateToken(user.getEmail());
-        return new AuthResponse(user, token);
+        UserDTO userDTO = convertToDTO(user);
+        return new AuthResponse(userDTO, token);
+    }
+
+    private UserDTO convertToDTO(UserEntity user) {
+        return UserDTO.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .age(user.getAge())
+                .weight(user.getWeight())
+                .height(user.getHeight())
+                .avatarUrl(user.getAvatarUrl())
+                .isActive(user.isActive())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .build();
     }
 }

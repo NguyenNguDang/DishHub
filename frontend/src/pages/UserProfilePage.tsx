@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useCurrentProfile, useUpdateProfile, useUploadAvatar } from '../hooks/useUserProfile';
+import type { UserProfile } from '../types';
 
 interface ProfileFormData {
   firstName: string;
@@ -11,17 +13,40 @@ interface ProfileFormData {
 }
 
 export const UserProfilePage: React.FC = () => {
+  // ✅ API hooks
+  const { data: currentProfile, isLoading, error } = useCurrentProfile();
+  const updateProfileMutation = useUpdateProfile();
+  const uploadAvatarMutation = useUploadAvatar();
+
+  // ✅ Form state
   const [formData, setFormData] = useState<ProfileFormData>({
-    firstName: 'Alex',
-    lastName: 'Chen',
-    email: 'alex.chen@example.com',
-    age: 28,
-    weight: 75,
-    bio: 'Passionate home cook and food explorer. I love experimenting with spicy Asian flavors and baking sourdough on weekends.',
-    dietaryPreferences: ['Vegetarian'],
+    firstName: '',
+    lastName: '',
+    email: '',
+    age: 0,
+    weight: 0,
+    bio: '',
+    dietaryPreferences: [],
   });
 
   const [isSaving, setIsSaving] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState('');
+
+  // ✅ Initialize form from API data
+  useEffect(() => {
+    if (currentProfile) {
+      setFormData({
+        firstName: currentProfile.firstName || '',
+        lastName: currentProfile.lastName || '',
+        email: currentProfile.email || '',
+        age: currentProfile.age || 0,
+        weight: currentProfile.weight || 0,
+        bio: currentProfile.bio || '',
+        dietaryPreferences: currentProfile.preferences?.dietaryRestrictions || [],
+      });
+      setAvatarUrl(currentProfile.avatar || `https://ui-avatars.com/api/?name=${currentProfile.firstName}+${currentProfile.lastName}&background=f27f0d&color=fff&bold=true&size=256`);
+    }
+  }, [currentProfile]);
 
   const dietaryOptions = ['Vegetarian', 'Gluten-Free', 'Dairy-Free', 'Keto'];
 
@@ -48,19 +73,76 @@ export const UserProfilePage: React.FC = () => {
     e.preventDefault();
     setIsSaving(true);
     try {
-      // TODO: Implement API call to save profile
-      console.log('Saving profile:', formData);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      alert('Profile updated successfully!');
+      await updateProfileMutation.mutateAsync({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        age: formData.age,
+        weight: formData.weight,
+        bio: formData.bio,
+        preferences: {
+          dietaryRestrictions: formData.dietaryPreferences,
+        },
+      });
+      alert('✓ Profile updated successfully!');
     } catch (error) {
       console.error('Error saving profile:', error);
+      alert('Failed to save profile. Please try again.');
     } finally {
       setIsSaving(false);
     }
   };
 
+  // ✅ Handle avatar upload
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const newAvatarUrl = await uploadAvatarMutation.mutateAsync(file);
+      setAvatarUrl(newAvatarUrl);
+      alert('✓ Avatar uploaded successfully!');
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      alert('Failed to upload avatar. Please try again.');
+    }
+  };
+
+  // ✅ Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background-light dark:bg-background-dark flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-slate-600 dark:text-slate-400">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background-light dark:bg-background-dark flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 dark:text-red-400 mb-4">Failed to load profile</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">{error.message}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark">
+      {/* Hidden file input for avatar upload */}
+      <input
+        type="file"
+        id="avatar-input"
+        accept="image/*"
+        onChange={handleAvatarUpload}
+        className="hidden"
+      />
+
       {/* Main Content */}
       <main className="max-w-5xl mx-auto px-4 py-8 sm:py-12">
         <div className="mb-8">
@@ -82,27 +164,28 @@ export const UserProfilePage: React.FC = () => {
                   <img
                     alt="User Avatar"
                     className="w-full h-full object-cover"
-                    src="https://ui-avatars.com/api/?name=Alex+Chen&background=f27f0d&color=fff&bold=true&size=256"
+                    src={avatarUrl}
                   />
                 </div>
-                <button className="absolute bottom-4 right-0 bg-primary text-white p-2 rounded-full shadow-lg hover:scale-105 transition-transform border-2 border-white dark:border-slate-900">
+                <button 
+                  type="button"
+                  onClick={() => document.getElementById('avatar-input')?.click()}
+                  className="absolute bottom-4 right-0 bg-primary text-white p-2 rounded-full shadow-lg hover:scale-105 transition-transform border-2 border-white dark:border-slate-900"
+                >
                   <span className="material-symbols-outlined text-sm">
                     photo_camera
                   </span>
                 </button>
               </div>
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                Alex Chen
+                {formData.firstName} {formData.lastName}
               </h2>
               <p className="text-slate-500 dark:text-slate-400">
-                alex.chen@example.com
+                {formData.email}
               </p>
               <div className="mt-6 flex flex-wrap justify-center gap-2">
                 <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full uppercase tracking-wider">
-                  Premium Member
-                </span>
-                <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold rounded-full uppercase tracking-wider">
-                  Foodie Level 4
+                  Member
                 </span>
               </div>
             </div>

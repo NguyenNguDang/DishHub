@@ -46,7 +46,7 @@ export const Header = ({ isLoggedIn, userName, onLogout }: HeaderProps) => {
                   <p className="text-xs text-gray-500">Người dùng</p>
                 </div>
                 <img
-                  src="https://via.placeholder.com/32"
+                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(userName || 'User')}&background=random&bold=true`}
                   alt="avatar"
                   className="w-8 h-8 rounded-full"
                 />

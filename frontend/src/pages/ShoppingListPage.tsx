@@ -1,48 +1,54 @@
-import React, { useState } from 'react';
-
-interface ShoppingItem {
-  id: string;
-  name: string;
-  quantity: number;
-  unit: string;
-  category: string;
-  completed: boolean;
-}
+import React, { useState, useEffect } from 'react';
+import { useGetShoppingList, useUpdateShoppingListItem, useShareShoppingList } from '../hooks/useShoppingListApi';
+import type { ShoppingListItem } from '../types';
 
 interface CategoryGroup {
   name: string;
   icon: string;
-  items: ShoppingItem[];
+  items: ShoppingListItem[];
 }
 
 const ShoppingListPage: React.FC = () => {
-  const [currentWeek] = useState('Oct 23 — Oct 29, 2023');
+  // ✅ Week state management
+  const [weekIndex, setWeekIndex] = useState(0);
+  const [currentWeek, setCurrentWeek] = useState('Oct 23 — Oct 29, 2023');
   const [activeFilter, setActiveFilter] = useState<'all' | 'completed'>('all');
-  
-  const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([
-    // Produce
-    { id: '1', name: 'Baby Spinach', quantity: 500, unit: 'g', category: 'Produce', completed: false },
-    { id: '2', name: 'Red Bell Peppers', quantity: 3, unit: 'units', category: 'Produce', completed: false },
-    { id: '3', name: 'Garlic Bulbs', quantity: 2, unit: 'units', category: 'Produce', completed: true },
-    { id: '4', name: 'Sweet Potatoes', quantity: 1.5, unit: 'kg', category: 'Produce', completed: false },
-    { id: '5', name: 'Red Onions', quantity: 4, unit: 'units', category: 'Produce', completed: false },
-    
-    // Meat & Seafood
-    { id: '6', name: 'Chicken Breast', quantity: 800, unit: 'g', category: 'Meat & Seafood', completed: false },
-    { id: '7', name: 'Atlantic Salmon Fillets', quantity: 2, unit: 'units', category: 'Meat & Seafood', completed: false },
-    { id: '8', name: 'Lean Ground Beef', quantity: 1, unit: 'lb', category: 'Meat & Seafood', completed: false },
-    
-    // Dairy & Eggs
-    { id: '9', name: 'Organic Large Eggs', quantity: 1, unit: 'dozen', category: 'Dairy & Eggs', completed: false },
-    { id: '10', name: 'Greek Yogurt', quantity: 500, unit: 'ml', category: 'Dairy & Eggs', completed: true },
-    
-    // Pantry
-    { id: '11', name: 'Extra Virgin Olive Oil', quantity: 250, unit: 'ml', category: 'Pantry', completed: false },
-    { id: '12', name: 'Quinoa', quantity: 2, unit: 'cups', category: 'Pantry', completed: false },
-    { id: '13', name: 'Canned Chickpeas', quantity: 2, unit: 'tins', category: 'Pantry', completed: false },
-    { id: '14', name: 'Balsamic Vinegar', quantity: 1, unit: 'btl', category: 'Pantry', completed: false },
-  ]);
+  const [shareEmail, setShareEmail] = useState('');
+  const [showShareModal, setShowShareModal] = useState(false);
 
+  // ✅ API hooks
+  const { data: shoppingList, isLoading, error } = useGetShoppingList(currentWeek);
+  const updateItemMutation = useUpdateShoppingListItem();
+  const shareListMutation = useShareShoppingList();
+
+  // ✅ Fallback mock data khi không có API
+  const mockItems: ShoppingListItem[] = [
+    // Produce
+    { id: '1', name: 'Baby Spinach', quantity: 500, unit: 'g', category: 'Produce', isChecked: false, addedAt: new Date() },
+    { id: '2', name: 'Red Bell Peppers', quantity: 3, unit: 'units', category: 'Produce', isChecked: false, addedAt: new Date() },
+    { id: '3', name: 'Garlic Bulbs', quantity: 2, unit: 'units', category: 'Produce', isChecked: true, addedAt: new Date() },
+    { id: '4', name: 'Sweet Potatoes', quantity: 1.5, unit: 'kg', category: 'Produce', isChecked: false, addedAt: new Date() },
+    { id: '5', name: 'Red Onions', quantity: 4, unit: 'units', category: 'Produce', isChecked: false, addedAt: new Date() },
+
+    // Meat & Seafood
+    { id: '6', name: 'Chicken Breast', quantity: 800, unit: 'g', category: 'Meat & Seafood', isChecked: false, addedAt: new Date() },
+    { id: '7', name: 'Atlantic Salmon Fillets', quantity: 2, unit: 'units', category: 'Meat & Seafood', isChecked: false, addedAt: new Date() },
+    { id: '8', name: 'Lean Ground Beef', quantity: 1, unit: 'lb', category: 'Meat & Seafood', isChecked: false, addedAt: new Date() },
+
+    // Dairy & Eggs
+    { id: '9', name: 'Organic Large Eggs', quantity: 1, unit: 'dozen', category: 'Dairy & Eggs', isChecked: false, addedAt: new Date() },
+    { id: '10', name: 'Greek Yogurt', quantity: 500, unit: 'ml', category: 'Dairy & Eggs', isChecked: true, addedAt: new Date() },
+
+    // Pantry
+    { id: '11', name: 'Extra Virgin Olive Oil', quantity: 250, unit: 'ml', category: 'Pantry', isChecked: false, addedAt: new Date() },
+    { id: '12', name: 'Quinoa', quantity: 2, unit: 'cups', category: 'Pantry', isChecked: false, addedAt: new Date() },
+    { id: '13', name: 'Canned Chickpeas', quantity: 2, unit: 'tins', category: 'Pantry', isChecked: false, addedAt: new Date() },
+    { id: '14', name: 'Balsamic Vinegar', quantity: 1, unit: 'btl', category: 'Pantry', isChecked: false, addedAt: new Date() },
+  ];
+
+  const shoppingItems = shoppingList?.items || mockItems;
+
+  // ✅ Category icons mapping
   const categoryIcons: Record<string, string> = {
     'Produce': 'eco',
     'Meat & Seafood': 'set_meal',
@@ -50,12 +56,79 @@ const ShoppingListPage: React.FC = () => {
     'Pantry': 'inventory_2',
   };
 
-  const toggleItem = (itemId: string) => {
-    setShoppingItems(items =>
-      items.map(item =>
-        item.id === itemId ? { ...item, completed: !item.completed } : item
-      )
-    );
+  // ...existing code...
+
+  // ✅ Calculate weeks
+  const getWeekDateRange = (index: number) => {
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay() + index * 7);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+    const format = (date: Date) => {
+      const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+      return date.toLocaleDateString('en-US', options);
+    };
+
+    return `${format(startOfWeek)} — ${format(endOfWeek)}, ${endOfWeek.getFullYear()}`;
+  };
+
+  // ✅ Update week display
+  useEffect(() => {
+    setCurrentWeek(getWeekDateRange(weekIndex));
+  }, [weekIndex]);
+
+  // ✅ Handle week navigation
+  const handlePreviousWeek = () => {
+    setWeekIndex(prev => prev - 1);
+  };
+
+  const handleNextWeek = () => {
+    setWeekIndex(prev => prev + 1);
+  };
+
+  // ✅ Handle toggle item
+  const toggleItem = async (itemId: string) => {
+    const item = shoppingItems.find(i => i.id === itemId);
+    if (!item || !shoppingList) return;
+
+    try {
+      await updateItemMutation.mutateAsync({
+        shoppingListId: shoppingList.id,
+        itemId,
+        data: { isChecked: !item.isChecked }
+      });
+    } catch (err) {
+      console.error('Failed to toggle item:', err);
+    }
+  };
+
+  // ✅ Handle share
+  const handleShare = async () => {
+    if (!shareEmail || !shoppingList) return;
+
+    try {
+      const result = await shareListMutation.mutateAsync({
+        shoppingListId: shoppingList.id,
+        email: shareEmail
+      });
+      
+      // Copy share URL to clipboard
+      navigator.clipboard.writeText(result.shareUrl);
+      
+      // Show success message
+      alert(`✓ Shared! Link copied to clipboard:\n${result.shareUrl}`);
+      setShareEmail('');
+      setShowShareModal(false);
+    } catch (err) {
+      alert('Failed to share. Please check the email and try again.');
+    }
+  };
+
+  // ✅ Handle print
+  const handlePrint = () => {
+    window.print();
   };
 
   const groupedItems = shoppingItems.reduce((acc, item) => {
@@ -75,7 +148,7 @@ const ShoppingListPage: React.FC = () => {
   const filteredGroups = groupedItems.map(group => ({
     ...group,
     items: activeFilter === 'completed'
-      ? group.items.filter(item => item.completed)
+      ? group.items.filter(item => item.isChecked)
       : group.items,
   })).filter(group => group.items.length > 0);
 
@@ -93,15 +166,21 @@ const ShoppingListPage: React.FC = () => {
             </div>
             <div className="bg-orange-500/5 dark:bg-orange-500/10 p-4 rounded-xl border border-orange-500/10 flex flex-col gap-2 min-w-[320px]">
               <label className="text-xs font-bold uppercase tracking-wider text-orange-500">Select Week</label>
-              <div className="flex items-center justify-between gap-4">
-                <button className="p-1 hover:text-orange-500 transition-colors text-slate-600 dark:text-slate-400">
+            <div className="flex items-center justify-between gap-4">
+                <button 
+                  onClick={handlePreviousWeek}
+                  className="p-1 hover:text-orange-500 transition-colors text-slate-600 dark:text-slate-400"
+                >
                   <span className="material-symbols-outlined">chevron_left</span>
                 </button>
                 <div className="flex flex-col items-center">
                   <span className="font-bold text-slate-800 dark:text-slate-100">{currentWeek}</span>
                   <span className="text-[11px] text-slate-500 dark:text-slate-400">12 recipes planned</span>
                 </div>
-                <button className="p-1 hover:text-orange-500 transition-colors text-slate-600 dark:text-slate-400">
+                <button 
+                  onClick={handleNextWeek}
+                  className="p-1 hover:text-orange-500 transition-colors text-slate-600 dark:text-slate-400"
+                >
                   <span className="material-symbols-outlined">chevron_right</span>
                 </button>
               </div>
@@ -133,11 +212,17 @@ const ShoppingListPage: React.FC = () => {
               <span className="material-symbols-outlined text-[18px]">check_circle</span>
               Completed
             </button>
-            <button className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap text-slate-900 dark:text-white">
+            <button
+              onClick={() => setShowShareModal(true)}
+              className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap text-slate-900 dark:text-white"
+            >
               <span className="material-symbols-outlined text-[18px] align-middle mr-1" style={{ display: 'inline' }}>share</span>
               Share List
             </button>
-            <button className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap text-slate-900 dark:text-white">
+            <button 
+              onClick={handlePrint}
+              className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap text-slate-900 dark:text-white"
+            >
               <span className="material-symbols-outlined text-[18px] align-middle mr-1" style={{ display: 'inline' }}>print</span>
               Print
             </button>
@@ -162,14 +247,14 @@ const ShoppingListPage: React.FC = () => {
                     >
                       <input
                         type="checkbox"
-                        checked={item.completed}
+                        checked={item.isChecked}
                         onChange={() => toggleItem(item.id)}
                         className="w-5 h-5 rounded border-slate-300 dark:border-slate-700 text-orange-500 focus:ring-orange-500 accent-orange-500"
-                        style={item.completed ? { opacity: 0.5 } : {}}
+                        style={item.isChecked ? { opacity: 0.5 } : {}}
                       />
                       <span
                         className={`ml-4 font-medium flex-grow ${
-                          item.completed
+                          item.isChecked
                             ? 'text-slate-400 line-through'
                             : 'text-slate-900 dark:text-white'
                         }`}
@@ -178,7 +263,7 @@ const ShoppingListPage: React.FC = () => {
                       </span>
                       <span
                         className={`text-sm font-semibold ${
-                          item.completed
+                          item.isChecked
                             ? 'text-slate-400'
                             : 'text-slate-500 dark:text-slate-400'
                         }`}
@@ -187,7 +272,7 @@ const ShoppingListPage: React.FC = () => {
                       </span>
                       <span
                         className={`ml-1 text-sm uppercase ${
-                          item.completed
+                          item.isChecked
                             ? 'text-slate-400'
                             : 'text-slate-400'
                         }`}
@@ -237,6 +322,41 @@ const ShoppingListPage: React.FC = () => {
           <span className="material-symbols-outlined text-[28px]">add</span>
         </button>
       </div>
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4 dark:text-white">Share Shopping List</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+              Enter an email to share this shopping list
+            </p>
+            <input
+              type="email"
+              value={shareEmail}
+              onChange={(e) => setShareEmail(e.target.value)}
+              placeholder="Enter email address"
+              className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white mb-4 focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="flex-1 px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleShare}
+                disabled={!shareEmail || shareListMutation.isPending}
+                style={{ backgroundColor: shareEmail ? '#f27f0d' : '#ccc' }}
+                className="flex-1 px-4 py-2 text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {shareListMutation.isPending ? 'Sharing...' : 'Share'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

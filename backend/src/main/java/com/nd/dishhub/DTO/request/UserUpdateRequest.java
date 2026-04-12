@@ -20,12 +20,12 @@ public class UserUpdateRequest {
     private String lastName;
 
     @Min(value = 0, message = "Age must be greater than or equal to 0")
-    private int age;
+    private Integer age;
 
     @Min(value = 0, message = "Weight must be greater than or equal to 0")
-    private float weight;
+    private Float weight;
 
     @Min(value = 0, message = "Height must be greater than or equal to 0")
-    private float height;
+    private Float height;
 }
 

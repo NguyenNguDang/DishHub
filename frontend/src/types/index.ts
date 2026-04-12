@@ -17,6 +17,13 @@ export interface AuthContextType {
 }
 
 // Recipe Types
+export interface Nutrition {
+  totalCalories: number;
+  totalProtein: number;
+  totalFat: number;
+  totalCarbs: number;
+}
+
 export interface Recipe {
   id: string;
   title: string;
@@ -32,9 +39,11 @@ export interface Recipe {
   reviews: number;
   ingredients: Ingredient[];
   instructions: string[];
+  nutrition?: Nutrition;
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;
+  isPublic?: boolean;
 }
 
 export interface Ingredient {

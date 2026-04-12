@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { recipeApiClient } from '../services/recipeApi';
-import type { Recipe } from '../types';
+import { useQuery } from '@tanstack/react-query';
+import { recipeService } from '../services';
 
 interface Filters {
   search: string;
@@ -18,90 +18,47 @@ const RecipeExplorerPage: React.FC = () => {
     category: 'All',
   });
 
+  // State riêng cho query (dùng để debounce)
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const categories = ['All', 'Breakfast', 'Vegan', 'Quick & Easy', 'Gluten-Free', 'Desserts'];
 
-  // Fetch recipes on component mount
+  // Debounce search input (500ms)
   useEffect(() => {
-    fetchRecipes();
-  }, []);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(filters.search);
+    }, 500);
 
-  const fetchRecipes = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      let data: Recipe[] = [];
-      
-      if (filters.search) {
-        // Tìm kiếm
-        data = await recipeApiClient.searchRecipes(filters.search);
-      } else if (filters.category !== 'All') {
-        // Lọc theo danh mục
-        data = await recipeApiClient.getRecipesByCategory(filters.category);
-      } else {
-        // Danh sách tất cả
-        data = await recipeApiClient.getRecipes();
+    return () => clearTimeout(timer);
+  }, [filters.search]);
+
+  /**
+   * Fetch recipes dựa trên filters
+   * useQuery sẽ tự động refetch khi dependencies thay đổi
+   */
+  const { data: recipes = [], isLoading, error } = useQuery({
+    queryKey: ['recipes', debouncedSearch, filters.category],
+    queryFn: async () => {
+      try {
+        if (debouncedSearch) {
+          console.log('🔍 Calling search API:', debouncedSearch);
+          return await recipeService.search(debouncedSearch);
+        } else if (filters.category !== 'All') {
+          console.log('📂 Fetching by category:', filters.category);
+          return await recipeService.getByCategory(filters.category);
+        } else {
+          console.log('📋 Fetching all recipes');
+          return await recipeService.getAll();
+        }
+      } catch (error) {
+        console.error('❌ Error in queryFn:', error);
+        throw error;
       }
-      
-      setRecipes(data);
-    } catch (err) {
-      console.error('Error fetching recipes:', err);
-      setError('Failed to load recipes. Please try again.');
-      setRecipes([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle search submission
-  const handleSearchSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!filters.search.trim()) {
-      setError('Please enter a search query');
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await recipeApiClient.searchRecipes(filters.search);
-      setRecipes(data);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to search recipes. Please try again.';
-      console.error('Search error:', err);
-      setError(errorMessage);
-      setRecipes([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle category change
-  const handleCategoryClick = async (category: string) => {
-    setFilters({ ...filters, category, search: '' });
-    setError(null);
-    setLoading(true);
-    
-    try {
-      let data: Recipe[];
-      if (category !== 'All') {
-        data = await recipeApiClient.getRecipesByCategory(category);
-      } else {
-        data = await recipeApiClient.getRecipes();
-      }
-      setRecipes(data);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : `Failed to load ${category} recipes.`;
-      console.error(`Error fetching ${category} recipes:`, err);
-      setError(errorMessage);
-      setRecipes([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    staleTime: 5 * 60 * 1000, // Cache 5 phút
+    gcTime: 10 * 60 * 1000, // Garbage collect 10 phút
+  });
 
   const toggleFavorite = (recipeId: string) => {
     const newFavorites = new Set(favorites);
@@ -113,9 +70,32 @@ const RecipeExplorerPage: React.FC = () => {
     setFavorites(newFavorites);
   };
 
+  // Handle search submission
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!filters.search.trim()) {
+      // Clear search
+      setDebouncedSearch('');
+      return;
+    }
+    // Debounce sẽ tự động trigger refetch
+    // Không cần gọi thêm cái gì vì useEffect đã handle rồi
+  };
+
+  // Handle category change
+  const handleCategoryClick = (category: string) => {
+    setFilters({ ...filters, category, search: '' });
+    setDebouncedSearch(''); // Reset search khi chọn category
+    // useQuery sẽ tự động refetch vì category thay đổi
+  };
+
+  // Map error object hoặc message
+  const errorMessage = error instanceof Error
+    ? error.message
+    : 'Failed to load recipes. Please try again.';
+
   return (
     <div className="min-h-screen bg-white dark:bg-slate-900">
-
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 lg:px-8 py-8">
         {/* Error Message */}
@@ -125,19 +105,13 @@ const RecipeExplorerPage: React.FC = () => {
               error
             </span>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-red-800 dark:text-red-300">{error}</p>
+              <p className="text-sm font-semibold text-red-800 dark:text-red-300">{errorMessage}</p>
             </div>
-            <button
-              onClick={() => setError(null)}
-              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
-            >
-              <span className="material-symbols-outlined text-lg">close</span>
-            </button>
           </div>
         )}
 
         {/* Loading Indicator */}
-        {loading && (
+        {isLoading && (
           <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center gap-3">
             <div className="animate-spin">
               <span className="material-symbols-outlined text-blue-600 dark:text-blue-400">
@@ -165,16 +139,20 @@ const RecipeExplorerPage: React.FC = () => {
               placeholder="Search recipes..."
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearchSubmit(e as any);
+                }
+              }}
               className="w-full pl-10 pr-4 py-3 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400"
             />
           </div>
           <button
             style={{ backgroundColor: '#f27f0d' }}
-            className="px-6 py-3 text-white font-semibold rounded-lg transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-            onMouseEnter={(e) => !loading && (e.currentTarget.style.opacity = '0.8')}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+            className="px-6 py-3 text-white font-semibold rounded-lg transition-opacity disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
             onClick={handleSearchSubmit}
-            disabled={loading}
+            disabled={isLoading}
+            title="Search recipes"
           >
             Search
           </button>
@@ -222,7 +200,7 @@ const RecipeExplorerPage: React.FC = () => {
               <button
                 key={category}
                 onClick={() => handleCategoryClick(category)}
-                disabled={loading}
+                disabled={isLoading}
                 className={`px-4 py-2 rounded-full whitespace-nowrap font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                   filters.category === category
                     ? 'bg-orange-500 text-white'
@@ -238,7 +216,7 @@ const RecipeExplorerPage: React.FC = () => {
         {/* Recipe Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
           {/* Empty State */}
-          {recipes.length === 0 && !loading && !error && (
+          {recipes.length === 0 && !isLoading && !error && (
             <div className="col-span-full text-center py-12">
               <span className="material-symbols-outlined text-6xl text-slate-300 dark:text-slate-600 flex justify-center mb-4">
                 restaurant
@@ -262,7 +240,7 @@ const RecipeExplorerPage: React.FC = () => {
           )}
 
           {/* Loading Skeleton */}
-          {loading && recipes.length === 0 && (
+          {isLoading && recipes.length === 0 && (
             <>
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 animate-pulse">
@@ -331,14 +309,14 @@ const RecipeExplorerPage: React.FC = () => {
         </div>
 
         {/* Load More Button */}
-        {recipes.length > 0 && !loading && (
+        {recipes.length > 0 && !isLoading && (
           <div className="flex justify-center py-8">
             <button
               style={{ borderColor: '#f27f0d', color: '#f27f0d' }}
               className="flex items-center gap-2 px-8 py-3 rounded-full border-2 font-bold transition-all hover:bg-orange-500 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={loading}
+              disabled={isLoading}
               onMouseEnter={(e) => {
-                if (!loading) {
+                if (!isLoading) {
                   e.currentTarget.style.backgroundColor = '#f27f0d';
                   e.currentTarget.style.color = 'white';
                 }

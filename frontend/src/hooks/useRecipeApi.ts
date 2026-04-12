@@ -1,20 +1,17 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import type { UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
 import type { Recipe, CreateRecipeRequest, UpdateRecipeRequest } from '../types';
-import { recipeApiClient } from '../services/recipeApi';
+import { recipeService } from '../services';
 import { queryClient } from '../config/queryClient';
 
-// ==================== QUERIES ====================
-
 /**
- * Hook để lấy danh sách tất cả công thức
- * Dữ liệu được cache và tự động cập nhật
+ * Lấy tất cả recipes
  */
 export const useGetRecipes = (options?: UseQueryOptions<Recipe[], Error>) => {
   return useQuery({
     queryKey: ['recipes'],
     queryFn: async () => {
-      return recipeApiClient.getRecipes();
+      return recipeService.getAll();
     },
     staleTime: 1000 * 60 * 5, // 5 phút
     gcTime: 1000 * 60 * 10, // 10 phút
@@ -23,7 +20,7 @@ export const useGetRecipes = (options?: UseQueryOptions<Recipe[], Error>) => {
 };
 
 /**
- * Hook để lấy chi tiết một công thức
+ * Lấy 1 recipe theo id
  */
 export const useGetRecipeById = (
   id: string,
@@ -32,7 +29,7 @@ export const useGetRecipeById = (
   return useQuery({
     queryKey: ['recipe', id],
     queryFn: async () => {
-      return recipeApiClient.getRecipeById(id);
+      return recipeService.getById(id);
     },
     enabled: !!id, // Chỉ fetch khi có id
     staleTime: 1000 * 60 * 5,
@@ -42,7 +39,7 @@ export const useGetRecipeById = (
 };
 
 /**
- * Hook để tìm kiếm công thức
+ * tìm kiếm recipe
  */
 export const useSearchRecipes = (
   query: string,
@@ -51,7 +48,7 @@ export const useSearchRecipes = (
   return useQuery({
     queryKey: ['recipes', 'search', query],
     queryFn: async () => {
-      return recipeApiClient.searchRecipes(query);
+      return recipeService.search(query);
     },
     enabled: !!query, // Chỉ fetch khi có query
     staleTime: 1000 * 60 * 2, // 2 phút
@@ -60,7 +57,7 @@ export const useSearchRecipes = (
 };
 
 /**
- * Hook để lấy công thức theo danh mục
+ * Lấy recipe theo danh mục
  */
 export const useGetRecipesByCategory = (
   category: string,
@@ -69,7 +66,7 @@ export const useGetRecipesByCategory = (
   return useQuery({
     queryKey: ['recipes', 'category', category],
     queryFn: async () => {
-      return recipeApiClient.getRecipesByCategory(category);
+      return recipeService.getByCategory(category);
     },
     enabled: !!category,
     staleTime: 1000 * 60 * 5,
@@ -78,23 +75,40 @@ export const useGetRecipesByCategory = (
   });
 };
 
-// ==================== MUTATIONS ====================
+/**
+ * Lấy recipes của user
+ */
+export const useGetUserRecipes = (
+  userId: string = 'me',
+  page: number = 0,
+  limit: number = 12,
+  options?: UseQueryOptions<Recipe[], Error>
+) => {
+  return useQuery({
+    queryKey: ['recipes', 'user', userId, page],
+    queryFn: async () => {
+      return recipeService.getUserRecipes(userId, page, limit);
+    },
+    staleTime: 1000 * 60 * 5, // 5 phút
+    gcTime: 1000 * 60 * 10, // 10 phút
+    ...options,
+  });
+};
+
 
 /**
- * Hook để tạo công thức mới
- * Tự động invalidate cache khi thành công
+ * tạo công thức mới
  */
 export const useAddRecipe = (
   options?: UseMutationOptions<Recipe, Error, CreateRecipeRequest>
 ) => {
   return useMutation({
     mutationFn: async (recipeData: CreateRecipeRequest) => {
-      return recipeApiClient.createRecipe(recipeData);
+      return recipeService.create(recipeData);
     },
-    onSuccess: (newRecipe: Recipe) => {
+    onSuccess: async (newRecipe: Recipe) => {
       // Invalidate danh sách công thức để fetch lại
-      queryClient.invalidateQueries({ queryKey: ['recipes'] });
-      
+      await queryClient.invalidateQueries({ queryKey: ['recipes'] });
       // Thêm công thức mới vào cache
       queryClient.setQueryData(['recipe', newRecipe.id], newRecipe);
     },
@@ -106,19 +120,18 @@ export const useAddRecipe = (
 };
 
 /**
- * Hook để cập nhật công thức
- * Tự động cập nhật cache khi thành công
+ * cập nhật công thức
  */
 export const useUpdateRecipe = (
   options?: UseMutationOptions<Recipe, Error, { id: string; data: UpdateRecipeRequest }>
 ) => {
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateRecipeRequest }) => {
-      return recipeApiClient.updateRecipe(id, data);
+      return recipeService.update(id, data);
     },
-    onSuccess: (updatedRecipe: Recipe) => {
+    onSuccess: async (updatedRecipe: Recipe) => {
       // Invalidate danh sách công thức
-      queryClient.invalidateQueries({ queryKey: ['recipes'] });
+      await queryClient.invalidateQueries({ queryKey: ['recipes'] });
       
       // Cập nhật cache của công thức cụ thể
       queryClient.setQueryData(['recipe', updatedRecipe.id], updatedRecipe);
@@ -131,19 +144,18 @@ export const useUpdateRecipe = (
 };
 
 /**
- * Hook để xóa công thức
- * Tự động xóa khỏi cache khi thành công
+ * xóa công thức
  */
 export const useDeleteRecipe = (
   options?: UseMutationOptions<void, Error, string>
 ) => {
   return useMutation({
     mutationFn: async (id: string) => {
-      return recipeApiClient.deleteRecipe(id);
+      return recipeService.delete(id);
     },
-    onSuccess: (_, deletedId: string) => {
+    onSuccess: async (_, deletedId: string) => {
       // Invalidate danh sách công thức
-      queryClient.invalidateQueries({ queryKey: ['recipes'] });
+      await queryClient.invalidateQueries({ queryKey: ['recipes'] });
       
       // Xóa công thức khỏi cache
       queryClient.removeQueries({ queryKey: ['recipe', deletedId] });

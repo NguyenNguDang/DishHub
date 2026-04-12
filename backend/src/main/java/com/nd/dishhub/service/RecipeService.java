@@ -22,7 +22,23 @@ public interface RecipeService {
 
     Page<RecipeResponse> getPublicRecipes(Pageable pageable);
 
-    Page<RecipeResponse> getRecipesByUser(Long userId, Pageable pageable);
+     Page<RecipeResponse> getRecipesByUser(Long userId, Pageable pageable);
+
+     /**
+      * Tìm kiếm công thức theo tên hoặc mô tả
+      * @param query từ khóa tìm kiếm
+      * @param pageable Thông tin phân trang
+      * @return Page<RecipeResponse> chứa các công thức public phù hợp
+      */
+     Page<RecipeResponse> searchRecipes(String query, Pageable pageable);
+
+     /**
+      * Lọc công thức theo danh mục
+      * @param category tên danh mục
+      * @param pageable Thông tin phân trang
+      * @return Page<RecipeResponse> chứa các công thức public trong danh mục
+      */
+     Page<RecipeResponse> getRecipesByCategory(String category, Pageable pageable);
 
     // ==================== CUSTOM RECIPE METHODS ====================
 

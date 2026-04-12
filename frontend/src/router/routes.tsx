@@ -1,7 +1,6 @@
 import type { RouteObject } from 'react-router-dom';
-import { createBrowserRouter, Outlet } from 'react-router-dom';
-import { MainLayout } from '../components';
-import { AuthProvider } from '../store';
+import { createBrowserRouter } from 'react-router-dom';
+import { RootLayoutWithAuth, AuthLayoutWithProvider } from './layouts';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
 import RecipeExplorerPage from '../pages/RecipeExplorerPage';
@@ -10,41 +9,9 @@ import ShoppingListPage from '../pages/ShoppingListPage';
 import { UserProfilePage } from '../pages/UserProfilePage';
 import WeeklyMealPlannerPage from '../pages/WeeklyMealPlannerPage';
 import MyRecipesPage from '../pages/MyRecipesPage';
+import { AddRecipePage } from '../pages/AddRecipePage';
+import { EditRecipePage } from '../pages/EditRecipePage';
 import { NotFound } from '../pages/NotFoundPage';
-import { useAuthStore } from '../store';
-
-// Root layout component
-const RootLayout = () => {
-  const { isLoggedIn, user, logout } = useAuthStore();
-
-  return (
-    <MainLayout
-      isLoggedIn={isLoggedIn}
-      userName={user?.username}
-      onLogout={logout}
-    >
-      <Outlet />
-    </MainLayout>
-  );
-};
-
-// Wrap RootLayout with AuthProvider
-const RootLayoutWithAuth = () => {
-  return (
-    <AuthProvider>
-      <RootLayout />
-    </AuthProvider>
-  );
-};
-
-// Auth layout với AuthProvider
-const AuthLayoutWithProvider = () => {
-  return (
-    <AuthProvider>
-      <Outlet />
-    </AuthProvider>
-  );
-};
 
 export const routes: RouteObject[] = [
   {
@@ -62,6 +29,14 @@ export const routes: RouteObject[] = [
       {
         path: '/recipes/:id',
         element: <RecipeDetailPage />,
+      },
+      {
+        path: '/recipes/add',
+        element: <AddRecipePage />,
+      },
+      {
+        path: '/recipes/edit/:id',
+        element: <EditRecipePage />,
       },
       {
         path: '/my-recipes',

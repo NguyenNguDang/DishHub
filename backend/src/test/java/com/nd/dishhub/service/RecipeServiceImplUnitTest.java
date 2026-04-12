@@ -65,7 +65,15 @@ class RecipeServiceImplUnitTest {
         // Setup valid recipe request
         validRecipeRequest = RecipeRequest.builder()
                 .title("Pasta Carbonara")
-                .instructions("Cook pasta, mix with sauce")
+                .description("Classic Italian pasta")
+                .image("https://example.com/pasta.jpg")
+                .prepTime(10)
+                .cookTime(20)
+                .servings(4)
+                .difficulty("medium")
+                .category("Pasta")
+                .tags(List.of("italian", "pasta", "quick"))
+                .instructions(List.of("Cook pasta", "mix with sauce"))
                 .isPublic(true)
                 .parentId(null)
                 .build();
@@ -73,7 +81,15 @@ class RecipeServiceImplUnitTest {
         // Setup test recipe entity
         testRecipeEntity = RecipeEntity.builder()
                 .title("Pasta Carbonara")
-                .instructions("Cook pasta, mix with sauce")
+                .description("Classic Italian pasta")
+                .imageUrl("https://example.com/pasta.jpg")
+                .prepTime(10)
+                .cookTime(20)
+                .servings(4)
+                .difficulty("medium")
+                .category("Pasta")
+                .tags("italian,pasta,quick")
+                .instructions("Cook pasta|mix with sauce")
                 .isPublic(true)
                 .user(testUserEntity)
                 .parent(null)
@@ -86,7 +102,15 @@ class RecipeServiceImplUnitTest {
         expectedResponse = RecipeResponse.builder()
                 .id(1L)
                 .title("Pasta Carbonara")
-                .instructions("Cook pasta, mix with sauce")
+                .description("Classic Italian pasta")
+                .image("https://example.com/pasta.jpg")
+                .prepTime(10)
+                .cookTime(20)
+                .servings(4)
+                .difficulty("medium")
+                .category("Pasta")
+                .tags(List.of("italian", "pasta", "quick"))
+                .instructions(List.of("Cook pasta", "mix with sauce"))
                 .isPublic(true)
                 .userId(1L)
                 .parentId(null)
@@ -143,7 +167,7 @@ class RecipeServiceImplUnitTest {
 
         RecipeRequest requestWithParent = RecipeRequest.builder()
                 .title("Pasta Carbonara Variation")
-                .instructions("Cook pasta, mix with different sauce")
+                .instructions(List.of("Cook pasta", "mix with different sauce"))
                 .isPublic(false)
                 .parentId(parentId)
                 .build();
@@ -158,7 +182,7 @@ class RecipeServiceImplUnitTest {
 
         RecipeEntity recipeWithParent = RecipeEntity.builder()
                 .title("Pasta Carbonara Variation")
-                .instructions("Cook pasta, mix with different sauce")
+                .instructions("Cook pasta|mix with different sauce")
                 .isPublic(false)
                 .user(testUserEntity)
                 .parent(parentRecipe)
@@ -192,7 +216,7 @@ class RecipeServiceImplUnitTest {
 
         RecipeRequest requestWithParent = RecipeRequest.builder()
                 .title("Pasta Carbonara Variation")
-                .instructions("Cook pasta, mix with different sauce")
+                .instructions(List.of("Cook pasta", "mix with different sauce"))
                 .isPublic(false)
                 .parentId(parentId)
                 .build();
@@ -216,7 +240,7 @@ class RecipeServiceImplUnitTest {
         Long userId = 1L;
         RecipeRequest privateRequest = RecipeRequest.builder()
                 .title("Secret Recipe")
-                .instructions("Top secret instructions")
+                .instructions(List.of("Top secret instructions"))
                 .isPublic(false)
                 .parentId(null)
                 .build();
@@ -253,7 +277,7 @@ class RecipeServiceImplUnitTest {
         Long recipeId = 1L;
         RecipeRequest updateRequest = RecipeRequest.builder()
                 .title("Updated Pasta Carbonara")
-                .instructions("Updated instructions")
+                .instructions(List.of("Updated instructions"))
                 .isPublic(false)
                 .parentId(null)
                 .build();
@@ -278,7 +302,7 @@ class RecipeServiceImplUnitTest {
         // Assert
         assertNotNull(result);
         assertEquals("Updated Pasta Carbonara", result.getTitle());
-        assertEquals("Updated instructions", result.getInstructions());
+        assertEquals(List.of("Updated instructions"), result.getInstructions());
         assertFalse(result.getIsPublic());
         verify(recipeRepository, times(1)).findById(recipeId);
         verify(recipeRepository, times(1)).save(any(RecipeEntity.class));
@@ -316,14 +340,14 @@ class RecipeServiceImplUnitTest {
 
         RecipeRequest updateRequest = RecipeRequest.builder()
                 .title("Pasta Carbonara")
-                .instructions("Cook pasta, mix with sauce")
+                .instructions(List.of("Cook pasta", "mix with sauce"))
                 .isPublic(true)
                 .parentId(newParentId)
                 .build();
 
         RecipeEntity updatedRecipe = RecipeEntity.builder()
                 .title("Pasta Carbonara")
-                .instructions("Cook pasta, mix with sauce")
+                .instructions("Cook pasta|mix with sauce")
                 .isPublic(true)
                 .user(testUserEntity)
                 .parent(newParent)
@@ -354,7 +378,7 @@ class RecipeServiceImplUnitTest {
 
         RecipeRequest updateRequest = RecipeRequest.builder()
                 .title("Pasta Carbonara")
-                .instructions("Cook pasta, mix with sauce")
+                .instructions(List.of("Cook pasta", "mix with sauce"))
                 .isPublic(true)
                 .parentId(nonExistentParentId)
                 .build();

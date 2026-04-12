@@ -47,8 +47,16 @@ public class RecipeServiceImpl implements RecipeService {
 
         RecipeEntity recipe = RecipeEntity.builder()
                 .title(request.getTitle())
-                .instructions(request.getInstructions())
-                .isPublic(request.getIsPublic())
+                .description(request.getDescription())
+                .imageUrl(request.getImage())
+                .prepTime(request.getPrepTime() != null ? request.getPrepTime() : 0)
+                .cookTime(request.getCookTime() != null ? request.getCookTime() : 0)
+                .servings(request.getServings() != null ? request.getServings() : 1)
+                .difficulty(request.getDifficulty() != null ? request.getDifficulty() : "medium")
+                .category(request.getCategory())
+                .tags(request.getTags() != null ? String.join(",", request.getTags()) : "")
+                .instructions(request.getInstructions() != null ? String.join("|", request.getInstructions()) : "")
+                .isPublic(request.getIsPublic() != null ? request.getIsPublic() : false)
                 .user(user)
                 .parent(parent)
                 .build();
@@ -63,8 +71,22 @@ public class RecipeServiceImpl implements RecipeService {
                 .orElseThrow(() -> new RuntimeException("Recipe with ID " + id + " not found"));
 
         recipe.setTitle(request.getTitle());
-        recipe.setInstructions(request.getInstructions());
-        recipe.setIsPublic(request.getIsPublic());
+        recipe.setDescription(request.getDescription());
+        recipe.setImageUrl(request.getImage());
+        recipe.setPrepTime(request.getPrepTime() != null ? request.getPrepTime() : recipe.getPrepTime());
+        recipe.setCookTime(request.getCookTime() != null ? request.getCookTime() : recipe.getCookTime());
+        recipe.setServings(request.getServings() != null ? request.getServings() : recipe.getServings());
+        recipe.setDifficulty(request.getDifficulty() != null ? request.getDifficulty() : recipe.getDifficulty());
+        recipe.setCategory(request.getCategory() != null ? request.getCategory() : recipe.getCategory());
+        if (request.getTags() != null) {
+            recipe.setTags(String.join(",", request.getTags()));
+        }
+        if (request.getInstructions() != null) {
+             recipe.setInstructions(String.join("|", request.getInstructions()));
+         }
+         if (request.getIsPublic() != null) {
+             recipe.setIsPublic(request.getIsPublic());
+         }
 
         if (request.getParentId() != null && !request.getParentId().equals(recipe.getParent() != null ? recipe.getParent().getId() : null)) {
             RecipeEntity parent = recipeRepository.findById(request.getParentId())
@@ -241,11 +263,39 @@ public class RecipeServiceImpl implements RecipeService {
                 .map(this::mapToResponse);
     }
 
+    @Override
+    public Page<RecipeResponse> searchRecipes(String query, Pageable pageable) {
+        return recipeRepository.searchPublicRecipes(query, pageable)
+                .map(this::mapToResponse);
+    }
+
+    @Override
+    public Page<RecipeResponse> getRecipesByCategory(String category, Pageable pageable) {
+        return recipeRepository.findPublicRecipesByCategory(category, pageable)
+                .map(this::mapToResponse);
+    }
+
     private RecipeResponse mapToResponse(RecipeEntity recipe) {
+        List<String> tags = recipe.getTags() != null && !recipe.getTags().isEmpty() 
+            ? List.of(recipe.getTags().split(",")) 
+            : List.of();
+        
+        List<String> instructions = recipe.getInstructions() != null && !recipe.getInstructions().isEmpty()
+            ? List.of(recipe.getInstructions().split("\\|"))
+            : List.of();
+            
         return RecipeResponse.builder()
                 .id(recipe.getId())
                 .title(recipe.getTitle())
-                .instructions(recipe.getInstructions())
+                .description(recipe.getDescription())
+                .image(recipe.getImageUrl())
+                .prepTime(recipe.getPrepTime())
+                .cookTime(recipe.getCookTime())
+                .servings(recipe.getServings())
+                .difficulty(recipe.getDifficulty())
+                .category(recipe.getCategory())
+                .tags(tags)
+                .instructions(instructions)
                 .isPublic(recipe.getIsPublic())
                 .userId(recipe.getUser() != null ? recipe.getUser().getId() : null)
                 .parentId(recipe.getParent() != null ? recipe.getParent().getId() : null)
