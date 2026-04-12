@@ -85,8 +85,7 @@ public interface RecipeRepository extends JpaRepository<RecipeEntity, Long> {
      * Tìm recipes có tag cụ thể
      */
     @Query("SELECT DISTINCT r FROM RecipeEntity r " +
-           "JOIN r.tags t " +
-           "WHERE t.name = :tagName AND r.isPublic = true")
+           "WHERE r.tags LIKE %:tagName% AND r.isPublic = true")
     Page<RecipeEntity> findPublicRecipesByTag(@Param("tagName") String tagName, Pageable pageable);
 
     /**
@@ -104,4 +103,18 @@ public interface RecipeRepository extends JpaRepository<RecipeEntity, Long> {
      */
     @Query("SELECT r FROM RecipeEntity r WHERE r.user.id = :userId AND r.isPublic = false")
     Page<RecipeEntity> findPrivateRecipesByUser(@Param("userId") Long userId, Pageable pageable);
+
+    /**
+     * Tìm recipes public theo title (search)
+     */
+    @Query("SELECT r FROM RecipeEntity r WHERE r.isPublic = true " +
+           "AND (LOWER(r.title) LIKE LOWER(CONCAT('%', :query, '%')) " +
+           "OR LOWER(r.description) LIKE LOWER(CONCAT('%', :query, '%')))")
+    Page<RecipeEntity> searchPublicRecipes(@Param("query") String query, Pageable pageable);
+
+    /**
+     * Tìm recipes public theo category
+     */
+    @Query("SELECT r FROM RecipeEntity r WHERE r.isPublic = true AND r.category = :category")
+    Page<RecipeEntity> findPublicRecipesByCategory(@Param("category") String category, Pageable pageable);
 }
