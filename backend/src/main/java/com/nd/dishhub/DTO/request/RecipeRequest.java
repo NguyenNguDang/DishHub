@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -16,11 +17,26 @@ public class RecipeRequest {
     @NotBlank(message = "Recipe title is required")
     private String title;
 
-    @NotBlank(message = "Instructions are required")
-    private String instructions;
+    @NotBlank(message = "Description is required")
+    private String description;
 
-    @NotNull(message = "Public flag is required")
-    private Boolean isPublic;
+    private String image;
+
+    private Integer prepTime;
+
+    private Integer cookTime;
+
+    private Integer servings;
+
+    private String difficulty;
+
+    private String category;
+
+    private List<String> tags;
+
+    private List<String> instructions;
+
+    private Boolean isPublic = false;  // Default to false if not provided
 
     private Long parentId;
 }

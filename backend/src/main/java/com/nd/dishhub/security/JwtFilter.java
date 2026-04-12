@@ -39,23 +39,41 @@ public class JwtFilter extends OncePerRequestFilter {
         
         final String authHeader = request.getHeader("Authorization");
         
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        // Kiểm tra authorization header
+        if (authHeader == null || authHeader.trim().isEmpty()) {
             chain.doFilter(request, response);
             return;
         }
         
-        final String jwt = authHeader.substring(7);
-        final String username = jwtUtil.extractUsername(jwt);
+        // Kiểm tra prefix "Bearer "
+        if (!authHeader.startsWith("Bearer ")) {
+            chain.doFilter(request, response);
+            return;
+        }
         
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+        // Extract token và kiểm tra rỗng
+        final String jwt = authHeader.substring(7).trim();
+        if (jwt.isEmpty()) {
+            chain.doFilter(request, response);
+            return;
+        }
+        
+        try {
+            final String username = jwtUtil.extractUsername(jwt);
             
-            if (jwtUtil.isTokenValid(jwt, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+                
+                if (jwtUtil.isTokenValid(jwt, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
             }
+        } catch (Exception e) {
+            // Log lỗi JWT (có thể token bị expire hoặc invalid)
+            System.err.println("JWT validation error: " + e.getMessage());
         }
         chain.doFilter(request, response);
     }

@@ -30,12 +30,32 @@ public class JwtUtil {
     }
     
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+        try {
+            //Validate token format
+            if (token == null || token.trim().isEmpty() || !token.contains(".")) {
+                return false;
+            }
+            final String username = extractUsername(token);
+            return (username != null && username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+        } catch (Exception e) {
+            // Return false thay vì throw exception
+            System.err.println("Token validation failed: " + e.getMessage());
+            return false;
+        }
     }
 
     public String extractUsername(String token) {
-        return extractClaim(token, Claims::getSubject);
+        try {
+            // Validate token format trước (phải có 2 dấu chấm)
+            if (token == null || token.trim().isEmpty() || !token.contains(".")) {
+                return null;
+            }
+            return extractClaim(token, Claims::getSubject);
+        } catch (Exception e) {
+            // Return null thay vì throw exception
+            System.err.println("Error extracting username from token: " + e.getMessage());
+            return null;
+        }
     }
     
     private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {

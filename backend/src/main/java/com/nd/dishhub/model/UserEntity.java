@@ -32,16 +32,19 @@ public class UserEntity extends AbstractEntity<Long> {
     private String lastName;
     
     @Column(name = "age")
-    private int Age;
+    private int age;
     
     @Column(name = "weight")
-    private float Weight;
+    private float weight;
     
     @Column(name = "height")
-    private float Height;
+    private float height;
     
     @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
+    
+    @Column(name = "avatar_url", length = 500)
+    private String avatarUrl;
     
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;

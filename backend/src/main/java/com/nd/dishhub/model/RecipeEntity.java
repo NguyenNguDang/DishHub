@@ -4,8 +4,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -30,6 +28,30 @@ public class RecipeEntity extends AbstractEntity<Long> {
     @Column(name = "title", nullable = false, length = 255)
     private String title;
     
+    @Column(name = "description", length = 500)
+    private String description;
+    
+    @Column(name = "category")
+    private String category;
+    
+    @Column(name = "image_url")
+    private String imageUrl;
+    
+    @Column(name = "prep_time")
+    private Integer prepTime;
+    
+    @Column(name = "cook_time")
+    private Integer cookTime;
+    
+    @Column(name = "servings")
+    private Integer servings;
+    
+    @Column(name = "difficulty")
+    private String difficulty;
+    
+    @Column(name = "tags")
+    private String tags;
+    
     @Column(name = "instructions", columnDefinition = "TEXT")
     private String instructions;
     
@@ -49,14 +71,6 @@ public class RecipeEntity extends AbstractEntity<Long> {
     
     @OneToMany(mappedBy = "recipe")
     private Set<RecipeIngredientEntity> recipeIngredients = new HashSet<>();
-    
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "recipe_tags",
-            joinColumns = @JoinColumn(name = "recipe_id"),
-            inverseJoinColumns = @JoinColumn(name = "tag_id")
-    )
-    private Set<TagEntity> tags = new HashSet<>();
     
     @OneToMany(mappedBy = "recipe")
     private Set<MealPlanEntity> mealPlans = new HashSet<>();
