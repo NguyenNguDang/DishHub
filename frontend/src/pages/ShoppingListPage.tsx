@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useGetShoppingList, useUpdateShoppingListItem, useShareShoppingList } from '../hooks/useShoppingListApi';
+import React, { useState } from 'react';
+import { useGetShoppingList, useUpdateShoppingListItem, useShareShoppingList, useGenerateShoppingListFromWeek, useDeleteShoppingListItem, useAddShoppingListItem } from '../hooks/useShoppingListApi';
 import type { ShoppingListItem } from '../types';
 
 interface CategoryGroup {
@@ -11,21 +11,44 @@ interface CategoryGroup {
 const ShoppingListPage: React.FC = () => {
   // ✅ Week state management
   const [weekIndex, setWeekIndex] = useState(0);
-  const [currentWeek, setCurrentWeek] = useState('Oct 23 — Oct 29, 2023');
-  const [weekStartDate, setWeekStartDate] = useState<string>(() => {
-    // Generate ISO format date for first call
-    const today = new Date();
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay());
-    return startOfWeek.toISOString().split('T')[0]; // Format: YYYY-MM-DD
-  });
   const [activeFilter, setActiveFilter] = useState<'all' | 'completed'>('all');
   const [shareEmail, setShareEmail] = useState('');
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showAddItemModal, setShowAddItemModal] = useState(false);
+  const [newItem, setNewItem] = useState({ name: '', quantity: 1, unit: 'units', category: 'Pantry' });
+
+  // ✅ Calculate week data from weekIndex (no need for state)
+  const weekData = (() => {
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay() + weekIndex * 7);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+    // Return ISO format for API
+    const isoStart = startOfWeek.toISOString().split('T')[0]; // YYYY-MM-DD
+
+    // Return display format
+    const format = (date: Date) => {
+      const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+      return date.toLocaleDateString('en-US', options);
+    };
+
+    return {
+      display: `${format(startOfWeek)} — ${format(endOfWeek)}, ${endOfWeek.getFullYear()}`,
+      iso: isoStart,
+    };
+  })();
+
+  const currentWeek = weekData.display;
+  const weekStartDate = weekData.iso;
 
   // ✅ API hooks
-  const { data: shoppingList, isLoading, error } = useGetShoppingList(weekStartDate);
+  const { data: shoppingList } = useGetShoppingList(weekStartDate);
+  const { data: generatedShoppingList, isLoading: isGenerating } = useGenerateShoppingListFromWeek(weekStartDate);
   const updateItemMutation = useUpdateShoppingListItem();
+  const addItemMutation = useAddShoppingListItem();
+  const deleteItemMutation = useDeleteShoppingListItem();
   const shareListMutation = useShareShoppingList();
 
   // ✅ Fallback mock data khi không có API
@@ -53,7 +76,13 @@ const ShoppingListPage: React.FC = () => {
     { id: '14', name: 'Balsamic Vinegar', quantity: 1, unit: 'btl', category: 'Pantry', isChecked: false, addedAt: new Date() },
   ];
 
-  const shoppingItems = shoppingList?.items || mockItems;
+  // ✅ Local state for optimistic updates
+  const [localItems, setLocalItems] = useState<ShoppingListItem[]>([]);
+
+  // ✅ Use generated shopping list if available, otherwise use fetched or mock
+  const shoppingItems = localItems.length > 0 
+    ? localItems 
+    : (generatedShoppingList?.items || shoppingList?.items || mockItems);
 
   // ✅ Category icons mapping
   const categoryIcons: Record<string, string> = {
@@ -64,36 +93,6 @@ const ShoppingListPage: React.FC = () => {
   };
 
 
-   //  Calculate weeks
-  const getWeekDateRange = (index: number) => {
-    const today = new Date();
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay() + index * 7);
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-
-    // Return ISO format for API
-    const isoStart = startOfWeek.toISOString().split('T')[0]; // YYYY-MM-DD
-
-    // Return display format
-    const format = (date: Date) => {
-      const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
-      return date.toLocaleDateString('en-US', options);
-    };
-
-    return {
-      display: `${format(startOfWeek)} — ${format(endOfWeek)}, ${endOfWeek.getFullYear()}`,
-      iso: isoStart,
-    };
-  };
-
-  // ✅ Update week display
-  useEffect(() => {
-    const weekData = getWeekDateRange(weekIndex);
-    setCurrentWeek(weekData.display);
-    setWeekStartDate(weekData.iso);
-  }, [weekIndex]);
-
   // ✅ Handle week navigation
   const handlePreviousWeek = () => {
     setWeekIndex(prev => prev - 1);
@@ -103,19 +102,30 @@ const ShoppingListPage: React.FC = () => {
     setWeekIndex(prev => prev + 1);
   };
 
-  // ✅ Handle toggle item
+  // ✅ Handle toggle item with optimistic update
   const toggleItem = async (itemId: string) => {
     const item = shoppingItems.find(i => i.id === itemId);
-    if (!item || !shoppingList) return;
+    if (!item) return;
 
-    try {
-      await updateItemMutation.mutateAsync({
-        shoppingListId: shoppingList.id,
-        itemId,
-        data: { isChecked: !item.isChecked }
-      });
-    } catch (err) {
-      console.error('Failed to toggle item:', err);
+    // ✅ Optimistic update - update UI immediately
+    const updatedItems = shoppingItems.map(i =>
+      i.id === itemId ? { ...i, isChecked: !i.isChecked } : i
+    );
+    setLocalItems(updatedItems);
+
+    // ✅ API call if shoppingList exists
+    if (shoppingList) {
+      try {
+        await updateItemMutation.mutateAsync({
+          shoppingListId: shoppingList.id,
+          itemId,
+          data: { isChecked: !item.isChecked }
+        });
+      } catch (err) {
+        console.error('Failed to toggle item:', err);
+        // Revert optimistic update on error
+        setLocalItems(shoppingItems);
+      }
     }
   };
 
@@ -137,6 +147,7 @@ const ShoppingListPage: React.FC = () => {
       setShareEmail('');
       setShowShareModal(false);
     } catch (err) {
+      console.error('Failed to share shopping list:', err);
       alert('Failed to share. Please check the email and try again.');
     }
   };
@@ -144,6 +155,106 @@ const ShoppingListPage: React.FC = () => {
   // ✅ Handle print
   const handlePrint = () => {
     window.print();
+  };
+
+  // ✅ Handle delete item with optimistic update
+  const handleDeleteItem = async (itemId: string) => {
+    if (!confirm('Are you sure you want to delete this item?')) return;
+
+    // ✅ Optimistic update - remove from UI immediately
+    const updatedItems = shoppingItems.filter(i => i.id !== itemId);
+    setLocalItems(updatedItems);
+
+    // ✅ API call if shoppingList exists
+    if (shoppingList) {
+      try {
+        await deleteItemMutation.mutateAsync({
+          shoppingListId: shoppingList.id,
+          itemId,
+        });
+      } catch (err) {
+        console.error('Failed to delete item:', err);
+        // Revert optimistic update on error
+        setLocalItems(shoppingItems);
+        alert('Failed to delete item');
+      }
+    }
+  };
+
+  // ✅ Handle add item with optimistic update
+  const handleAddItem = async () => {
+    if (!newItem.name) return;
+
+    // ✅ Create new item with temporary ID
+    const newItemObj: ShoppingListItem = {
+      id: Date.now().toString(),
+      name: newItem.name,
+      quantity: newItem.quantity,
+      unit: newItem.unit,
+      category: newItem.category,
+      isChecked: false,
+      addedAt: new Date(),
+    };
+
+    // ✅ Optimistic update - add to UI immediately
+    const updatedItems = [...shoppingItems, newItemObj];
+    setLocalItems(updatedItems);
+    setNewItem({ name: '', quantity: 1, unit: 'units', category: 'Pantry' });
+    setShowAddItemModal(false);
+
+    // ✅ API call if shoppingList exists
+    if (shoppingList) {
+      try {
+        await addItemMutation.mutateAsync({
+          shoppingListId: shoppingList.id,
+          data: {
+            name: newItem.name,
+            quantity: newItem.quantity,
+            unit: newItem.unit,
+            category: newItem.category,
+          },
+        });
+      } catch (err) {
+        console.error('Failed to add item:', err);
+        // Revert optimistic update on error
+        setLocalItems(shoppingItems);
+        setNewItem({ name: newItemObj.name, quantity: newItemObj.quantity, unit: newItemObj.unit, category: newItemObj.category });
+        setShowAddItemModal(true);
+        alert('Failed to add item');
+      }
+    } else {
+      alert('Item added to local list!');
+    }
+  };
+
+  // ✅ Handle export to CSV
+  const handleExportCSV = () => {
+    if (shoppingItems.length === 0) {
+      alert('No items to export');
+      return;
+    }
+
+    // Create CSV header
+    const headers = ['Item', 'Quantity', 'Unit', 'Category', 'Checked'];
+    const csvContent = [
+      headers.join(','),
+      ...shoppingItems.map(item =>
+        `"${item.name}",${item.quantity},"${item.unit}","${item.category}",${item.isChecked ? 'Yes' : 'No'}`
+      ),
+    ].join('\n');
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `shopping-list-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const groupedItems = shoppingItems.reduce((acc, item) => {
@@ -234,6 +345,16 @@ const ShoppingListPage: React.FC = () => {
               <span className="material-symbols-outlined text-[18px] align-middle mr-1" style={{ display: 'inline' }}>share</span>
               Share List
             </button>
+            <button
+              onClick={() => !generatedShoppingList && (window.location.href = '/weekly-meal-planner')}
+              disabled={isGenerating}
+              style={{ backgroundColor: generatedShoppingList ? '#f27f0d' : '#ccc', cursor: isGenerating ? 'not-allowed' : 'pointer' }}
+              className="px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap text-white flex items-center gap-2 disabled:opacity-50"
+              title={generatedShoppingList ? 'Shopping list generated from meal plans' : isGenerating ? 'Generating...' : 'Plan meals first to generate list'}
+            >
+              <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
+              {isGenerating ? 'Generating...' : generatedShoppingList ? 'Generated' : 'Generate from Meals'}
+            </button>
             <button 
               onClick={handlePrint}
               className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap text-slate-900 dark:text-white"
@@ -241,10 +362,37 @@ const ShoppingListPage: React.FC = () => {
               <span className="material-symbols-outlined text-[18px] align-middle mr-1" style={{ display: 'inline' }}>print</span>
               Print
             </button>
+            <button 
+              onClick={handleExportCSV}
+              className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap text-slate-900 dark:text-white"
+            >
+              <span className="material-symbols-outlined text-[18px] align-middle mr-1" style={{ display: 'inline' }}>download</span>
+              Export CSV
+            </button>
+            <button 
+              onClick={() => setShowAddItemModal(true)}
+              style={{ backgroundColor: '#f27f0d' }}
+              className="px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap text-white flex items-center gap-2 hover:opacity-90"
+            >
+              <span className="material-symbols-outlined text-[18px]">add</span>
+              Add Item
+            </button>
           </div>
 
           {/* Shopping List Sections */}
           <div className="space-y-8">
+            {isGenerating && (
+              <div className="p-4 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-lg flex items-center gap-2">
+                <span className="material-symbols-outlined animate-spin">hourglass_empty</span>
+                <span className="text-sm text-blue-700 dark:text-blue-300">Generating shopping list from meal plans...</span>
+              </div>
+            )}
+            {generatedShoppingList && !isGenerating && (
+              <div className="p-4 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-lg flex items-center gap-2">
+                <span className="material-symbols-outlined text-green-600 dark:text-green-400">check_circle</span>
+                <span className="text-sm text-green-700 dark:text-green-300">Shopping list auto-generated from your meal plans for this week!</span>
+              </div>
+            )}
             {filteredGroups.map((group) => (
               <section key={group.name}>
                 <div className="flex items-center gap-2 mb-4 border-b border-slate-100 dark:border-slate-800 pb-2">
@@ -286,14 +434,18 @@ const ShoppingListPage: React.FC = () => {
                         {item.quantity}
                       </span>
                       <span
-                        className={`ml-1 text-sm uppercase ${
-                          item.isChecked
-                            ? 'text-slate-400'
-                            : 'text-slate-400'
-                        }`}
+                        className="ml-1 text-sm uppercase text-slate-400"
                       >
                         {item.unit}
                       </span>
+                      <button
+                        onClick={() => handleDeleteItem(item.id)}
+                        disabled={deleteItemMutation.isPending}
+                        className="ml-3 p-1 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Delete item"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">delete</span>
+                      </button>
                     </label>
                   ))}
                 </div>
@@ -367,6 +519,92 @@ const ShoppingListPage: React.FC = () => {
                 className="flex-1 px-4 py-2 text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {shareListMutation.isPending ? 'Sharing...' : 'Share'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Item Modal */}
+      {showAddItemModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4 dark:text-white">Add New Item</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Item Name</label>
+                <input
+                  type="text"
+                  value={newItem.name}
+                  onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                  placeholder="e.g., Milk, Bread, Chicken"
+                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Quantity</label>
+                  <input
+                    type="number"
+                    value={newItem.quantity}
+                    onChange={(e) => setNewItem({ ...newItem, quantity: parseFloat(e.target.value) || 0 })}
+                    placeholder="1"
+                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Unit</label>
+                  <select
+                    value={newItem.unit}
+                    onChange={(e) => setNewItem({ ...newItem, unit: e.target.value })}
+                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  >
+                    <option>units</option>
+                    <option>g</option>
+                    <option>kg</option>
+                    <option>ml</option>
+                    <option>l</option>
+                    <option>cups</option>
+                    <option>tbsp</option>
+                    <option>tsp</option>
+                    <option>lb</option>
+                    <option>oz</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Category</label>
+                <select
+                  value={newItem.category}
+                  onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
+                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  <option>Produce</option>
+                  <option>Meat & Seafood</option>
+                  <option>Dairy & Eggs</option>
+                  <option>Pantry</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowAddItemModal(false)}
+                className="flex-1 px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddItem}
+                disabled={!newItem.name || addItemMutation.isPending}
+                style={{ backgroundColor: newItem.name ? '#f27f0d' : '#ccc' }}
+                className="flex-1 px-4 py-2 text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {addItemMutation.isPending ? 'Adding...' : 'Add Item'}
               </button>
             </div>
           </div>

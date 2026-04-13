@@ -20,6 +20,17 @@ public class ShoppingListController {
     
     private final ShoppingListService shoppingListService;
     
+    @GetMapping("/generate-from-week")
+    @Operation(summary = "Generate shopping list from meal plans", description = "Automatically generates shopping list by extracting ingredients from meal plans of a specific week")
+    @ApiResponse(responseCode = "200", description = "Shopping list generated successfully")
+    @ApiResponse(responseCode = "401", description = "Unauthorized")
+    public ResponseEntity<ShoppingListResponse> generateShoppingListFromWeek(
+        @RequestParam String weekStart
+    ) {
+        ShoppingListResponse response = shoppingListService.generateShoppingListFromWeek(weekStart);
+        return ResponseEntity.ok(response);
+    }
+    
     @GetMapping
     @Operation(summary = "Get shopping list for a week", description = "Retrieves shopping list items for a specific week")
     @ApiResponse(responseCode = "200", description = "Shopping list retrieved successfully")

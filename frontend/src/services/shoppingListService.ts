@@ -88,5 +88,19 @@ export const shoppingListService = {
       throw error;
     }
   },
-};
 
+  /**
+   * Tự động generate shopping list từ meal plans của tuần
+   */
+  generateShoppingListFromWeek: async (weekStart: string): Promise<ShoppingList> => {
+    try {
+      const response = await apiClient.get<ShoppingList>(
+        `/v1/shopping-lists/generate-from-week?weekStart=${encodeURIComponent(weekStart)}`
+      );
+      return response;
+    } catch (error) {
+      console.error('Error generating shopping list from week:', error);
+      throw error;
+    }
+  },
+};
