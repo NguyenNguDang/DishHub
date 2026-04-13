@@ -123,22 +123,43 @@ public class ShoppingListService {
     }
     
     private LocalDate parseWeekStartDate(String weekString) {
-        // Input: "Apr 12 — Apr 18, 2026"
-        // Extract: "Apr 12, 2026"
+        // Input can be either:
+        // 1. ISO format: "2026-04-12" (from API)
+        // 2. Display format: "Apr 12 — Apr 18, 2026" (from UI)
         try {
-            String[] parts = weekString.split("—");
-            String startPart = parts[0].trim(); // "Apr 12"
-            String endPart = parts[1].trim(); // "Apr 18, 2026"
+            // Try ISO format first (YYYY-MM-DD)
+            if (weekString != null && weekString.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                DateTimeFormatter isoFormatter = DateTimeFormatter.ISO_LOCAL_DATE;
+                return LocalDate.parse(weekString, isoFormatter);
+            }
             
-            // Extract year from endPart
-            String year = endPart.substring(endPart.length() - 4);
-            String fullDate = startPart + ", " + year; // "Apr 12, 2026"
+            // Try display format: "Apr 12 — Apr 18, 2026"
+            if (weekString != null && weekString.contains("—")) {
+                String[] parts = weekString.split("—");
+                if (parts.length >= 1) {
+                    String startPart = parts[0].trim(); // "Apr 12"
+                    String endPart = parts.length > 1 ? parts[1].trim() : ""; // "Apr 18, 2026"
+                    
+                    // Extract year from endPart or use current year
+                    String year;
+                    if (endPart.length() >= 4) {
+                        year = endPart.substring(endPart.length() - 4);
+                    } else {
+                        year = String.valueOf(java.time.Year.now().getValue());
+                    }
+                    
+                    String fullDate = startPart + ", " + year; // "Apr 12, 2026"
+                    
+                    // Use Locale.ENGLISH to parse month names like "Apr"
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy", java.util.Locale.ENGLISH);
+                    return LocalDate.parse(fullDate, formatter);
+                }
+            }
             
-            // ✅ Use Locale.ENGLISH to parse month names like "Apr"
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy", java.util.Locale.ENGLISH);
-            return LocalDate.parse(fullDate, formatter);
+            // Fallback
+            throw new IllegalArgumentException("Invalid week format: " + weekString);
         } catch (Exception e) {
-            // ✅ Fallback: return today's week start if parsing fails
+            // Fallback: return today's week start if parsing fails
             System.err.println("Failed to parse week date: " + weekString + ". Error: " + e.getMessage());
             LocalDate today = LocalDate.now();
             return today.minusDays(today.getDayOfWeek().getValue() - 1); // Monday of current week

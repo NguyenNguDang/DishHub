@@ -12,12 +12,19 @@ const ShoppingListPage: React.FC = () => {
   // ✅ Week state management
   const [weekIndex, setWeekIndex] = useState(0);
   const [currentWeek, setCurrentWeek] = useState('Oct 23 — Oct 29, 2023');
+  const [weekStartDate, setWeekStartDate] = useState<string>(() => {
+    // Generate ISO format date for first call
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+    return startOfWeek.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+  });
   const [activeFilter, setActiveFilter] = useState<'all' | 'completed'>('all');
   const [shareEmail, setShareEmail] = useState('');
   const [showShareModal, setShowShareModal] = useState(false);
 
   // ✅ API hooks
-  const { data: shoppingList, isLoading, error } = useGetShoppingList(currentWeek);
+  const { data: shoppingList, isLoading, error } = useGetShoppingList(weekStartDate);
   const updateItemMutation = useUpdateShoppingListItem();
   const shareListMutation = useShareShoppingList();
 
@@ -56,9 +63,8 @@ const ShoppingListPage: React.FC = () => {
     'Pantry': 'inventory_2',
   };
 
-  // ...existing code...
 
-  // ✅ Calculate weeks
+   //  Calculate weeks
   const getWeekDateRange = (index: number) => {
     const today = new Date();
     const startOfWeek = new Date(today);
@@ -66,17 +72,26 @@ const ShoppingListPage: React.FC = () => {
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
 
+    // Return ISO format for API
+    const isoStart = startOfWeek.toISOString().split('T')[0]; // YYYY-MM-DD
+
+    // Return display format
     const format = (date: Date) => {
       const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
       return date.toLocaleDateString('en-US', options);
     };
 
-    return `${format(startOfWeek)} — ${format(endOfWeek)}, ${endOfWeek.getFullYear()}`;
+    return {
+      display: `${format(startOfWeek)} — ${format(endOfWeek)}, ${endOfWeek.getFullYear()}`,
+      iso: isoStart,
+    };
   };
 
   // ✅ Update week display
   useEffect(() => {
-    setCurrentWeek(getWeekDateRange(weekIndex));
+    const weekData = getWeekDateRange(weekIndex);
+    setCurrentWeek(weekData.display);
+    setWeekStartDate(weekData.iso);
   }, [weekIndex]);
 
   // ✅ Handle week navigation

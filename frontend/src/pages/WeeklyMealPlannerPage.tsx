@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, {useMemo, useState, useEffect} from 'react';
+import {useGetRecipes, useGetWeeklyMealPlans, useCreateMealPlan, useDeleteMealPlanByDateAndType} from '../hooks';
+import type {Recipe} from '../types';
 
 interface Meal {
+  id?: string;
   name: string;
   calories: number;
   image: string;
@@ -22,7 +25,46 @@ interface Day {
 }
 
 const WeeklyMealPlannerPage: React.FC = () => {
-  const [days] = useState<Day[]>([
+  // API hooks
+  const { data: recipesData, isLoading: isLoadingRecipes } = useGetRecipes();
+  const recipes = useMemo(() => recipesData || [], [recipesData]);
+
+  // Get current week's Monday
+  const getCurrentWeekMonday = () => {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - daysFromMonday);
+    return monday.toISOString().split('T')[0];
+  };
+
+  const weekStartDate = getCurrentWeekMonday();
+
+  // Fetch weekly meal plans
+  const { data: weeklyMealPlans, isLoading: isLoadingMealPlans } = useGetWeeklyMealPlans(weekStartDate);
+  
+  // Mutations
+  const createMealPlanMutation = useCreateMealPlan({
+    onSuccess: () => {
+      // Meal plans will be refetched automatically via queryClient invalidation
+    },
+    onError: (error) => {
+      alert(`Failed to save meal plan: ${error.message}`);
+    },
+  });
+
+  const deleteMealPlanMutation = useDeleteMealPlanByDateAndType({
+    onSuccess: () => {
+      // Meal plans will be refetched automatically
+    },
+    onError: (error) => {
+      alert(`Failed to delete meal plan: ${error.message}`);
+    },
+  });
+
+  // State management - Initialize with empty days, then populate from API
+  const [days, setDays] = useState<Day[]>([
     {
       name: 'Monday',
       calories: 2100,
@@ -31,7 +73,7 @@ const WeeklyMealPlannerPage: React.FC = () => {
       carbs: 220,
       meals: {
         breakfast: null,
-        lunch: { name: 'Quinoa Buddha Bowl', calories: 450, image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCEXah1rF-QTmLAzoy6GV8bvRwtU1K0eyWYFqra0Sx0DQXozNWbsYEAA856FsgkqCbJ1EqaEWPWDeGJ_VPYJdoiHq2gaHX43yL2bISt7UZU-SSS33zhBPh_M7MLiGzfvzDnOdATkqWRujNTZz-nG3LddYML5kM2nGGc6bazOPH9qP5ILS-hwZMBPghpOaSnOvYpaRky3uC6-uaXS0cAt7--oR5BH8sTA6gNTsgYXsvzcNOsQmF2mFd8w1Eax4n8xtc6hTqFuDBlS1YZ' },
+        lunch: { id: 'sample-1', name: 'Quinoa Buddha Bowl', calories: 450, image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCEXah1rF-QTmLAzoy6GV8bvRwtU1K0eyWYFqra0Sx0DQXozNWbsYEAA856FsgkqCbJ1EqaEWPWDeGJ_VPYJdoiHq2gaHX43yL2bISt7UZU-SSS33zhBPh_M7MLiGzfvzDnOdATkqWRujNTZz-nG3LddYML5kM2nGGc6bazOPH9qP5ILS-hwZMBPghpOaSnOvYpaRky3uC6-uaXS0cAt7--oR5BH8sTA6gNTsgYXsvzcNOsQmF2mFd8w1Eax4n8xtc6hTqFuDBlS1YZ' },
         dinner: null,
         snack: null,
       },
@@ -42,12 +84,7 @@ const WeeklyMealPlannerPage: React.FC = () => {
       protein: 120,
       fat: 65,
       carbs: 190,
-      meals: {
-        breakfast: null,
-        lunch: null,
-        dinner: null,
-        snack: null,
-      },
+      meals: { breakfast: null, lunch: null, dinner: null, snack: null },
     },
     {
       name: 'Wednesday',
@@ -55,12 +92,7 @@ const WeeklyMealPlannerPage: React.FC = () => {
       protein: 140,
       fat: 80,
       carbs: 210,
-      meals: {
-        breakfast: null,
-        lunch: null,
-        dinner: null,
-        snack: null,
-      },
+      meals: { breakfast: null, lunch: null, dinner: null, snack: null },
     },
     {
       name: 'Thursday',
@@ -68,12 +100,7 @@ const WeeklyMealPlannerPage: React.FC = () => {
       protein: 130,
       fat: 70,
       carbs: 180,
-      meals: {
-        breakfast: null,
-        lunch: null,
-        dinner: null,
-        snack: null,
-      },
+      meals: { breakfast: null, lunch: null, dinner: null, snack: null },
     },
     {
       name: 'Friday',
@@ -81,12 +108,7 @@ const WeeklyMealPlannerPage: React.FC = () => {
       protein: 160,
       fat: 75,
       carbs: 230,
-      meals: {
-        breakfast: null,
-        lunch: null,
-        dinner: null,
-        snack: null,
-      },
+      meals: { breakfast: null, lunch: null, dinner: null, snack: null },
     },
     {
       name: 'Saturday',
@@ -94,12 +116,7 @@ const WeeklyMealPlannerPage: React.FC = () => {
       protein: 140,
       fat: 95,
       carbs: 250,
-      meals: {
-        breakfast: null,
-        lunch: null,
-        dinner: null,
-        snack: null,
-      },
+      meals: { breakfast: null, lunch: null, dinner: null, snack: null },
     },
     {
       name: 'Sunday',
@@ -107,15 +124,138 @@ const WeeklyMealPlannerPage: React.FC = () => {
       protein: 145,
       fat: 70,
       carbs: 200,
-      meals: {
-        breakfast: null,
-        lunch: null,
-        dinner: null,
-        snack: null,
-      },
+      meals: { breakfast: null, lunch: null, dinner: null, snack: null },
       isHighlight: true,
     },
   ]);
+
+  // Load meal plans from API when component mounts or week changes
+  useEffect(() => {
+    if (weeklyMealPlans && weeklyMealPlans.length > 0) {
+      // Map API meal plans to UI state
+      const updatedDays = days.map(day => {
+        const dayMealPlans = weeklyMealPlans.filter(mp => {
+          // Parse plan date and compare with day
+          const mealPlanDate = new Date(mp.planDate);
+          const dayDate = new Date();
+          const dayOfWeek = dayDate.getDay();
+          const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+          dayDate.setDate(dayDate.getDate() - daysFromMonday);
+
+          // Get the target date for this day
+          const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+          const dayIndex = daysOfWeek.indexOf(day.name);
+          const targetDate = new Date(dayDate);
+          targetDate.setDate(dayDate.getDate() + (dayIndex === 0 ? 6 : dayIndex - 1));
+
+          return mealPlanDate.toDateString() === targetDate.toDateString();
+        });
+
+        // Create updated meals object
+        const updatedMeals = { ...day.meals };
+        dayMealPlans.forEach(mp => {
+          const mealType = mp.mealType.toLowerCase() as keyof typeof updatedMeals;
+          if (mealType in updatedMeals) {
+            updatedMeals[mealType] = {
+              id: mp.recipeId.toString(),
+              name: mp.recipeName,
+              calories: 0, // Could fetch from recipe if needed
+              image: mp.recipeImage || 'https://via.placeholder.com/300',
+            };
+          }
+        });
+
+        return { ...day, meals: updatedMeals };
+      });
+
+      setDays(updatedDays);
+    }
+  }, [weeklyMealPlans]);
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [selectedMealType, setSelectedMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack' | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Handlers
+  const handleAddMeal = (dayIndex: number, mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack') => {
+    setSelectedDay(dayIndex);
+    setSelectedMealType(mealType);
+    setShowModal(true);
+  };
+
+  const handleSelectRecipe = (recipe: Recipe) => {
+    if (selectedDay === null || !selectedMealType) return;
+
+    // Prepare date for API
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - daysFromMonday);
+
+    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayIndex = daysOfWeek.indexOf(days[selectedDay].name);
+    const planDate = new Date(monday);
+    planDate.setDate(monday.getDate() + (dayIndex === 0 ? 6 : dayIndex - 1));
+    const planDateStr = planDate.toISOString().split('T')[0];
+
+    // Call API to save meal plan
+    createMealPlanMutation.mutate(
+      {
+        recipeId: Number(recipe.id),
+        planDate: planDateStr,
+        mealType: selectedMealType,
+      },
+      {
+        onSuccess: () => {
+          // Update local state for immediate UI feedback
+          const newDays = [...days];
+          newDays[selectedDay].meals[selectedMealType] = {
+            id: recipe.id,
+            name: recipe.title,
+            calories: Math.round(recipe.nutrition?.totalCalories || 0),
+            image: recipe.image || 'https://via.placeholder.com/300',
+          };
+          setDays(newDays);
+          setShowModal(false);
+          setSelectedDay(null);
+          setSelectedMealType(null);
+        },
+      }
+    );
+  };
+
+  const handleRemoveMeal = (dayIndex: number, mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack') => {
+    // Prepare date for API
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - daysFromMonday);
+
+    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayName = days[dayIndex].name;
+    const dayNameIndex = daysOfWeek.indexOf(dayName);
+    const planDate = new Date(monday);
+    planDate.setDate(monday.getDate() + (dayNameIndex === 0 ? 6 : dayNameIndex - 1));
+    const planDateStr = planDate.toISOString().split('T')[0];
+
+    // Call API to delete meal plan
+    deleteMealPlanMutation.mutate(
+      {
+        date: planDateStr,
+        mealType: mealType,
+      },
+      {
+        onSuccess: () => {
+          // Update local state
+          const newDays = [...days];
+          newDays[dayIndex].meals[mealType] = null;
+          setDays(newDays);
+        },
+      }
+    );
+  };
 
   const totalGroceryItems = 42;
   const weeklyPrepTime = 4.5;
@@ -196,16 +336,25 @@ const WeeklyMealPlannerPage: React.FC = () => {
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Breakfast</span>
                   </div>
                   {day.meals.breakfast ? (
-                    <div className="rounded-lg bg-orange-500/5 border border-orange-500/20 p-2">
+                    <div className="rounded-lg bg-orange-500/5 border border-orange-500/20 p-2 relative group">
                       <div
                         className="w-full rounded-md aspect-video mb-2 bg-cover bg-center"
                         style={{ backgroundImage: `url('${day.meals.breakfast.image}')` }}
                       />
                       <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{day.meals.breakfast.name}</p>
                       <p className="text-[10px] text-slate-500">{day.meals.breakfast.calories} kcal</p>
+                      <button
+                        onClick={() => handleRemoveMeal(index, 'breakfast')}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px]"
+                      >
+                        ✕
+                      </button>
                     </div>
                   ) : (
-                    <div className="group relative rounded-lg border border-dashed border-slate-300 dark:border-slate-700 p-3 hover:border-orange-500/50 transition-all cursor-pointer">
+                    <div 
+                      onClick={() => handleAddMeal(index, 'breakfast')}
+                      className="group relative rounded-lg border border-dashed border-slate-300 dark:border-slate-700 p-3 hover:border-orange-500/50 transition-all cursor-pointer"
+                    >
                       <button className="w-full flex items-center justify-center gap-2 text-slate-400 group-hover:text-orange-500">
                         <span className="material-symbols-outlined text-sm">add_circle</span>
                         <span className="text-xs font-semibold">Add Recipe</span>
@@ -220,16 +369,25 @@ const WeeklyMealPlannerPage: React.FC = () => {
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Lunch</span>
                   </div>
                   {day.meals.lunch ? (
-                    <div className="rounded-lg bg-orange-500/5 border border-orange-500/20 p-2">
+                    <div className="rounded-lg bg-orange-500/5 border border-orange-500/20 p-2 relative group">
                       <div
                         className="w-full rounded-md aspect-video mb-2 bg-cover bg-center"
                         style={{ backgroundImage: `url('${day.meals.lunch.image}')` }}
                       />
                       <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{day.meals.lunch.name}</p>
                       <p className="text-[10px] text-slate-500">{day.meals.lunch.calories} kcal</p>
+                      <button
+                        onClick={() => handleRemoveMeal(index, 'lunch')}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px]"
+                      >
+                        ✕
+                      </button>
                     </div>
                   ) : (
-                    <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-700 p-3 flex items-center justify-center gap-2 text-slate-400 hover:border-orange-500/50 cursor-pointer transition-all">
+                    <div
+                      onClick={() => handleAddMeal(index, 'lunch')}
+                      className="rounded-lg border border-dashed border-slate-300 dark:border-slate-700 p-3 flex items-center justify-center gap-2 text-slate-400 hover:border-orange-500/50 cursor-pointer transition-all"
+                    >
                       <span className="material-symbols-outlined text-sm">add_circle</span>
                       <span className="text-xs font-semibold">Add Recipe</span>
                     </div>
@@ -239,19 +397,59 @@ const WeeklyMealPlannerPage: React.FC = () => {
                 {/* Dinner */}
                 <div className="space-y-2">
                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Dinner</span>
-                  <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-700 p-3 flex items-center justify-center gap-2 text-slate-400 hover:border-orange-500/50 cursor-pointer transition-all">
-                    <span className="material-symbols-outlined text-sm">add_circle</span>
-                    <span className="text-xs font-semibold">Add Recipe</span>
-                  </div>
+                  {day.meals.dinner ? (
+                    <div className="rounded-lg bg-orange-500/5 border border-orange-500/20 p-2 relative group">
+                      <div
+                        className="w-full rounded-md aspect-video mb-2 bg-cover bg-center"
+                        style={{ backgroundImage: `url('${day.meals.dinner.image}')` }}
+                      />
+                      <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{day.meals.dinner.name}</p>
+                      <p className="text-[10px] text-slate-500">{day.meals.dinner.calories} kcal</p>
+                      <button
+                        onClick={() => handleRemoveMeal(index, 'dinner')}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px]"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => handleAddMeal(index, 'dinner')}
+                      className="rounded-lg border border-dashed border-slate-300 dark:border-slate-700 p-3 flex items-center justify-center gap-2 text-slate-400 hover:border-orange-500/50 cursor-pointer transition-all"
+                    >
+                      <span className="material-symbols-outlined text-sm">add_circle</span>
+                      <span className="text-xs font-semibold">Add Recipe</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Snack */}
                 <div className="space-y-2">
                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Snack</span>
-                  <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-700 p-3 flex items-center justify-center gap-2 text-slate-400 hover:border-orange-500/50 cursor-pointer transition-all">
-                    <span className="material-symbols-outlined text-sm">add_circle</span>
-                    <span className="text-xs font-semibold">Add Recipe</span>
-                  </div>
+                  {day.meals.snack ? (
+                    <div className="rounded-lg bg-orange-500/5 border border-orange-500/20 p-2 relative group">
+                      <div
+                        className="w-full rounded-md aspect-video mb-2 bg-cover bg-center"
+                        style={{ backgroundImage: `url('${day.meals.snack.image}')` }}
+                      />
+                      <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{day.meals.snack.name}</p>
+                      <p className="text-[10px] text-slate-500">{day.meals.snack.calories} kcal</p>
+                      <button
+                        onClick={() => handleRemoveMeal(index, 'snack')}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px]"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => handleAddMeal(index, 'snack')}
+                      className="rounded-lg border border-dashed border-slate-300 dark:border-slate-700 p-3 flex items-center justify-center gap-2 text-slate-400 hover:border-orange-500/50 cursor-pointer transition-all"
+                    >
+                      <span className="material-symbols-outlined text-sm">add_circle</span>
+                      <span className="text-xs font-semibold">Add Recipe</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -324,6 +522,82 @@ const WeeklyMealPlannerPage: React.FC = () => {
           </div>
         </div>
       </main>
+
+      {/* Recipe Selection Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] flex flex-col">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold dark:text-white">
+                Select Recipe for {selectedDay !== null ? days[selectedDay].name : ''} - {selectedMealType}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowModal(false);
+                  setSearchQuery('');
+                }}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Search Bar */}
+            <div className="mb-4">
+              <input
+                type="text"
+                placeholder="Search recipes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+
+            {isLoadingRecipes ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-slate-500 dark:text-slate-400">Loading recipes...</div>
+              </div>
+            ) : recipes.length === 0 ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-slate-500 dark:text-slate-400">No recipes found</div>
+              </div>
+            ) : (
+              <div className="overflow-y-auto flex-grow">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {recipes
+                    .filter((recipe: Recipe) =>
+                      recipe.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      recipe.description?.toLowerCase().includes(searchQuery.toLowerCase())
+                    )
+                    .map((recipe: Recipe) => (
+                      <button
+                        key={recipe.id}
+                        onClick={() => handleSelectRecipe(recipe)}
+                        className="text-left p-4 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-all"
+                      >
+                        <div className="aspect-video bg-slate-200 dark:bg-slate-700 rounded mb-2 overflow-hidden">
+                          <img
+                            src={recipe.image || 'https://via.placeholder.com/300'}
+                            alt={recipe.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <h4 className="font-bold text-slate-900 dark:text-white text-sm truncate">{recipe.title}</h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{recipe.description}</p>
+                        <div className="flex items-center gap-2 mt-2 text-xs text-slate-600 dark:text-slate-300">
+                          <span className="material-symbols-outlined text-[16px]">schedule</span>
+                          <span>{recipe.prepTime || 0} mins</span>
+                          <span className="material-symbols-outlined text-[16px] ml-2">local_fire_department</span>
+                          <span>{Math.round(recipe.nutrition?.totalCalories || 0)} kcal</span>
+                        </div>
+                      </button>
+                    ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
