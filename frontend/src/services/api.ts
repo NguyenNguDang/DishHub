@@ -5,9 +5,6 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 // request interceptor để tự động thêm token
@@ -18,6 +15,12 @@ axiosInstance.interceptors.request.use(
     if (token && token.trim() !== '') {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Không set Content-Type nếu data là FormData (để browser tự động set multipart/form-data)
+    if (!(config.data instanceof FormData)) {
+      config.headers['Content-Type'] = 'application/json';
+    }
+    
     return config;
   },
   (error) => Promise.reject(error)

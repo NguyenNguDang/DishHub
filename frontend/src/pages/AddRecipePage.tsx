@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAddRecipe } from '../hooks';
+import { useAddRecipe, useUploadRecipeImage } from '../hooks';
 import type { CreateRecipeRequest } from '../types';
 
 export const AddRecipePage = () => {
   const navigate = useNavigate();
   const addRecipe = useAddRecipe();
+  const uploadRecipeImage = useUploadRecipeImage();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
 
   const [formData, setFormData] = useState<CreateRecipeRequest>({
     title: '',
@@ -57,6 +60,59 @@ export const AddRecipePage = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Handle image file selection
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Vui lòng chọn một tệp ảnh hợp lệ');
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Kích thước ảnh không được vượt quá 10MB');
+      return;
+    }
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    setImageFile(file);
+    setError(null);
+  };
+
+  // Handle image upload
+  const handleUploadImage = async () => {
+    if (!imageFile) {
+      setError('Vui lòng chọn một ảnh');
+      return;
+    }
+
+    try {
+      const imageUrl = await uploadRecipeImage.mutateAsync(imageFile);
+      setFormData({ ...formData, image: imageUrl });
+      setSuccessMessage('✓ Ảnh được upload thành công!');
+      console.log('Image URL:', imageUrl);
+    } catch (err) {
+      setError('Không thể upload ảnh. Vui lòng thử lại.');
+      console.error('Error uploading image:', err);
+    }
+  };
+
+  // ✅ Handle removing selected image
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview('');
+    setFormData({ ...formData, image: '' });
   };
 
   return (
@@ -121,7 +177,70 @@ export const AddRecipePage = () => {
 
           <div className="mb-6">
             <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
-              URL Ảnh công thức
+              Ảnh công thức
+            </label>
+
+            {/* Image Preview */}
+            {imagePreview && (
+              <div className="mb-4 relative w-full h-48 rounded-lg overflow-hidden border-2 border-slate-200 dark:border-slate-600">
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  disabled={isLoading || uploadRecipeImage.isPending}
+                  className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 disabled:opacity-50"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            {/* Show current image URL if already uploaded */}
+            {formData.image && (
+              <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                <p className="text-xs font-semibold text-green-700 dark:text-green-300">✓ Ảnh đã được upload</p>
+                <p className="text-xs text-green-600 dark:text-green-400 truncate">{formData.image}</p>
+              </div>
+            )}
+
+            {/* File Input and Upload Button */}
+            <div className="flex gap-2">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                disabled={isLoading || uploadRecipeImage.isPending}
+                className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50"
+              />
+              <button
+                type="button"
+                onClick={handleUploadImage}
+                disabled={!imageFile || isLoading || uploadRecipeImage.isPending}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-semibold transition-colors flex items-center gap-2 min-w-fit"
+              >
+                {uploadRecipeImage.isPending ? (
+                  <>
+                    <div className="animate-spin rounded-full h-3 w-3 border-t-2 border-white"></div>
+                    Uploading...
+                  </>
+                ) : (
+                  'Upload'
+                )}
+              </button>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+              Định dạng: JPG, PNG, WebP | Tối đa: 10MB
+            </p>
+          </div>
+
+          {/* OLD URL Input - kept as fallback */}
+          <div className="mb-6 p-3 bg-slate-100 dark:bg-slate-700 rounded-lg">
+            <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
+              Hoặc nhập URL ảnh trực tiếp
             </label>
             <input
               type="url"

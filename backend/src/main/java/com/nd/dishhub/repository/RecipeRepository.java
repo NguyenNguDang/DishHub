@@ -46,7 +46,6 @@ public interface RecipeRepository extends JpaRepository<RecipeEntity, Long> {
      * Tìm recipe với tất cả tags
      */
     @Query("SELECT DISTINCT r FROM RecipeEntity r " +
-           "LEFT JOIN FETCH r.tags " +
            "WHERE r.id = :id")
     Optional<RecipeEntity> findByIdWithTags(@Param("id") Long id);
 
@@ -64,7 +63,6 @@ public interface RecipeRepository extends JpaRepository<RecipeEntity, Long> {
     @Query("SELECT DISTINCT r FROM RecipeEntity r " +
            "LEFT JOIN FETCH r.user " +
            "LEFT JOIN FETCH r.recipeIngredients " +
-           "LEFT JOIN FETCH r.tags " +
            "LEFT JOIN FETCH r.reviews " +
            "WHERE r.id = :id")
     Optional<RecipeEntity> findByIdWithAllRelationships(@Param("id") Long id);

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { useGetShoppingList, useUpdateShoppingListItem, useShareShoppingList, useGenerateShoppingListFromWeek, useDeleteShoppingListItem, useAddShoppingListItem } from '../hooks/useShoppingListApi';
 import type { ShoppingListItem } from '../types';
 
@@ -9,7 +10,7 @@ interface CategoryGroup {
 }
 
 const ShoppingListPage: React.FC = () => {
-  // ✅ Week state management
+  // Week state management
   const [weekIndex, setWeekIndex] = useState(0);
   const [activeFilter, setActiveFilter] = useState<'all' | 'completed'>('all');
   const [shareEmail, setShareEmail] = useState('');
@@ -17,7 +18,7 @@ const ShoppingListPage: React.FC = () => {
   const [showAddItemModal, setShowAddItemModal] = useState(false);
   const [newItem, setNewItem] = useState({ name: '', quantity: 1, unit: 'units', category: 'Pantry' });
 
-  // ✅ Calculate week data from weekIndex (no need for state)
+  // Calculate week data from weekIndex (no need for state)
   const weekData = (() => {
     const today = new Date();
     const startOfWeek = new Date(today);
@@ -43,7 +44,7 @@ const ShoppingListPage: React.FC = () => {
   const currentWeek = weekData.display;
   const weekStartDate = weekData.iso;
 
-  // ✅ API hooks
+  // API hooks
   const { data: shoppingList } = useGetShoppingList(weekStartDate);
   const { data: generatedShoppingList, isLoading: isGenerating } = useGenerateShoppingListFromWeek(weekStartDate);
   const updateItemMutation = useUpdateShoppingListItem();
@@ -51,7 +52,7 @@ const ShoppingListPage: React.FC = () => {
   const deleteItemMutation = useDeleteShoppingListItem();
   const shareListMutation = useShareShoppingList();
 
-  // ✅ Fallback mock data khi không có API
+  // Fallback mock data khi không có API
   const mockItems: ShoppingListItem[] = [
     // Produce
     { id: '1', name: 'Baby Spinach', quantity: 500, unit: 'g', category: 'Produce', isChecked: false, addedAt: new Date() },
@@ -76,15 +77,15 @@ const ShoppingListPage: React.FC = () => {
     { id: '14', name: 'Balsamic Vinegar', quantity: 1, unit: 'btl', category: 'Pantry', isChecked: false, addedAt: new Date() },
   ];
 
-  // ✅ Local state for optimistic updates
+  // Local state for optimistic updates
   const [localItems, setLocalItems] = useState<ShoppingListItem[]>([]);
 
-  // ✅ Use generated shopping list if available, otherwise use fetched or mock
+  // Use generated shopping list if available, otherwise use fetched or mock
   const shoppingItems = localItems.length > 0 
     ? localItems 
     : (generatedShoppingList?.items || shoppingList?.items || mockItems);
 
-  // ✅ Category icons mapping
+  // Category icons mapping
   const categoryIcons: Record<string, string> = {
     'Produce': 'eco',
     'Meat & Seafood': 'set_meal',
@@ -93,7 +94,7 @@ const ShoppingListPage: React.FC = () => {
   };
 
 
-  // ✅ Handle week navigation
+  // Handle week navigation
   const handlePreviousWeek = () => {
     setWeekIndex(prev => prev - 1);
   };
@@ -102,18 +103,18 @@ const ShoppingListPage: React.FC = () => {
     setWeekIndex(prev => prev + 1);
   };
 
-  // ✅ Handle toggle item with optimistic update
+  // Handle toggle item with optimistic update
   const toggleItem = async (itemId: string) => {
     const item = shoppingItems.find(i => i.id === itemId);
     if (!item) return;
 
-    // ✅ Optimistic update - update UI immediately
+    // Optimistic update - update UI immediately
     const updatedItems = shoppingItems.map(i =>
       i.id === itemId ? { ...i, isChecked: !i.isChecked } : i
     );
     setLocalItems(updatedItems);
 
-    // ✅ API call if shoppingList exists
+    // API call if shoppingList exists
     if (shoppingList) {
       try {
         await updateItemMutation.mutateAsync({
@@ -129,7 +130,7 @@ const ShoppingListPage: React.FC = () => {
     }
   };
 
-  // ✅ Handle share
+  // Handle share
   const handleShare = async () => {
     if (!shareEmail || !shoppingList) return;
 
@@ -152,20 +153,20 @@ const ShoppingListPage: React.FC = () => {
     }
   };
 
-  // ✅ Handle print
+  // Handle print
   const handlePrint = () => {
     window.print();
   };
 
-  // ✅ Handle delete item with optimistic update
+  // Handle delete item with optimistic update
   const handleDeleteItem = async (itemId: string) => {
     if (!confirm('Are you sure you want to delete this item?')) return;
 
-    // ✅ Optimistic update - remove from UI immediately
+    // Optimistic update - remove from UI immediately
     const updatedItems = shoppingItems.filter(i => i.id !== itemId);
     setLocalItems(updatedItems);
 
-    // ✅ API call if shoppingList exists
+    // API call if shoppingList exists
     if (shoppingList) {
       try {
         await deleteItemMutation.mutateAsync({
@@ -181,13 +182,13 @@ const ShoppingListPage: React.FC = () => {
     }
   };
 
-  // ✅ Handle add item with optimistic update
+  // Handle add item with optimistic update
   const handleAddItem = async () => {
     if (!newItem.name) return;
 
-    // ✅ Create new item with temporary ID
+    // Create new item with UUID
     const newItemObj: ShoppingListItem = {
-      id: Date.now().toString(),
+      id: uuidv4(),
       name: newItem.name,
       quantity: newItem.quantity,
       unit: newItem.unit,
@@ -196,13 +197,13 @@ const ShoppingListPage: React.FC = () => {
       addedAt: new Date(),
     };
 
-    // ✅ Optimistic update - add to UI immediately
+    // Optimistic update - add to UI immediately
     const updatedItems = [...shoppingItems, newItemObj];
     setLocalItems(updatedItems);
     setNewItem({ name: '', quantity: 1, unit: 'units', category: 'Pantry' });
     setShowAddItemModal(false);
 
-    // ✅ API call if shoppingList exists
+    // API call if shoppingList exists
     if (shoppingList) {
       try {
         await addItemMutation.mutateAsync({
@@ -227,7 +228,7 @@ const ShoppingListPage: React.FC = () => {
     }
   };
 
-  // ✅ Handle export to CSV
+  // Handle export to CSV
   const handleExportCSV = () => {
     if (shoppingItems.length === 0) {
       alert('No items to export');

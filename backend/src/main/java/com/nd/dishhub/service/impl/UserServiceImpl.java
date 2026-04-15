@@ -4,20 +4,16 @@ import com.nd.dishhub.DTO.request.UserUpdateRequest;
 import com.nd.dishhub.DTO.response.UserResponse;
 import com.nd.dishhub.model.UserEntity;
 import com.nd.dishhub.repository.UserRepository;
+import com.nd.dishhub.service.FileUploadService;
 import com.nd.dishhub.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -25,9 +21,7 @@ import java.util.UUID;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-
-    @Value("${file.upload.dir:uploads/avatars}")
-    private String uploadDir;
+    private final FileUploadService fileUploadService;
 
     @Override
     @Transactional(readOnly = true)
@@ -90,10 +84,7 @@ public class UserServiceImpl implements UserService {
         user.setActive(true);
         userRepository.save(user);
     }
-
-    /**
-     * ✅ Cập nhật profile của user hiện tại
-     */
+    
     @Override
     public UserResponse updateCurrentProfile(String email, UserUpdateRequest request) {
         UserEntity user = userRepository.findByEmail(email)
@@ -108,32 +99,17 @@ public class UserServiceImpl implements UserService {
         UserEntity updatedUser = userRepository.save(user);
         return mapToResponse(updatedUser);
     }
-
-    /**
-     * ✅ Upload avatar cho user
-     */
+    
     @Override
     public String uploadAvatar(String email, MultipartFile file) {
         try {
             UserEntity user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
-            // Create upload directory if not exists
-            File uploadDirectory = new File(uploadDir);
-            if (!uploadDirectory.exists()) {
-                uploadDirectory.mkdirs();
-            }
-
-            // Generate unique filename
-            String fileExtension = getFileExtension(file.getOriginalFilename());
-            String uniqueFileName = "avatar_" + user.getId() + "_" + UUID.randomUUID() + "." + fileExtension;
-            String filePath = Paths.get(uploadDir, uniqueFileName).toString();
-
-            // Save file
-            Files.write(Paths.get(filePath), file.getBytes());
+            // Upload file using FileUploadService
+            String avatarUrl = fileUploadService.uploadFile(file);
 
             // Save avatar URL to user
-            String avatarUrl = "/uploads/avatars/" + uniqueFileName;
             user.setAvatarUrl(avatarUrl);
             userRepository.save(user);
 
@@ -157,16 +133,6 @@ public class UserServiceImpl implements UserService {
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
-    }
-
-    /**
-     * Helper: Extract file extension
-     */
-    private String getFileExtension(String fileName) {
-        if (fileName == null || !fileName.contains(".")) {
-            return "jpg";
-        }
-        return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
     }
 }
 

@@ -167,3 +167,19 @@ export const useDeleteRecipe = (
   });
 };
 
+/**
+ * Upload hình ảnh công thức
+ */
+export const useUploadRecipeImage = (
+  options?: UseMutationOptions<string, Error, File>
+) => {
+  return useMutation({
+    mutationFn: async (file: File) => {
+      return recipeService.uploadRecipeImage(file);
+    },
+    onError: (error: Error) => {
+      console.error('Failed to upload recipe image:', error);
+    },
+    ...options,
+  });
+};

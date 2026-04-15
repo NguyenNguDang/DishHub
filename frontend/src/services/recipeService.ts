@@ -180,4 +180,23 @@ export const recipeService = {
       throw error;
     }
   },
+
+  /**
+   * Upload hình ảnh công thức
+   */
+  uploadRecipeImage: async (file: File): Promise<string> => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await axiosInstance.post<{ url: string }>(
+        '/v1/recipes/upload-image',
+        formData
+      );
+      return response.data.url;
+    } catch (error) {
+      console.error('Error uploading recipe image:', error);
+      throw error;
+    }
+  },
 };

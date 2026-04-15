@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useGetRecipeById, useUpdateRecipe } from '../hooks';
+import { useGetRecipeById, useUpdateRecipe, useUploadRecipeImage } from '../hooks';
 import type { UpdateRecipeRequest } from '../types';
 
 export const EditRecipePage = () => {
@@ -9,10 +9,13 @@ export const EditRecipePage = () => {
   
   const { data: recipe, isLoading: isLoadingRecipe } = useGetRecipeById(id || '');
   const updateRecipeMutation = useUpdateRecipe();
+  const uploadRecipeImage = useUploadRecipeImage();
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
 
   const [formData, setFormData] = useState<UpdateRecipeRequest>({
     title: '',
@@ -44,10 +47,11 @@ export const EditRecipePage = () => {
         ingredients: recipe.ingredients,
         instructions: recipe.instructions,
       });
+      setImagePreview(recipe.image);
     }
   }, [recipe]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setSuccessMessage(null);
@@ -71,22 +75,46 @@ export const EditRecipePage = () => {
         return;
       }
 
-      console.log('📝 Cập nhật công thức:', formData);
+      let imageUrl = formData.image;
+
+      // Handle image upload if a new file is selected
+      if (imageFile) {
+        const uploadResponse = await uploadRecipeImage.mutateAsync(imageFile);
+        imageUrl = uploadResponse || formData.image;
+      }
+      
+      console.log('Cập nhật công thức:', { ...formData, image: imageUrl });
       await updateRecipeMutation.mutateAsync({
         id,
-        data: formData,
+        data: { ...formData, image: imageUrl },
       });
       
-      setSuccessMessage('✅ Công thức được cập nhật thành công!');
+      setSuccessMessage('Công thức được cập nhật thành công!');
       setTimeout(() => {
         navigate('/my-recipes', { replace: true });
       }, 1000);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Không thể cập nhật công thức';
-      setError(`❌ Lỗi: ${errorMessage}`);
+      setError(`Lỗi: ${errorMessage}`);
       console.error('Lỗi cập nhật công thức:', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Preview the image file before uploading
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setImageFile(file);
+
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setImagePreview('');
     }
   };
 
@@ -193,6 +221,28 @@ export const EditRecipePage = () => {
               className="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50"
               placeholder="https://example.com/recipe.jpg"
             />
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
+              Tải lên ảnh công thức
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              disabled={isLoading}
+              className="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50"
+            />
+            {imagePreview && (
+              <div className="mt-4">
+                <img
+                  src={imagePreview}
+                  alt="Image preview"
+                  className="max-w-full h-auto rounded-lg shadow-md"
+                />
+              </div>
+            )}
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 mb-6">

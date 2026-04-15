@@ -18,9 +18,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/recipes")
@@ -251,5 +255,25 @@ public class RecipeController {
         
         ReviewResponse response = reviewService.createReview(id, request, user.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    // ==================== IMAGE UPLOAD ENDPOINTS ====================
+
+    @PostMapping("/upload-image")
+    public ResponseEntity<Map<String, String>> uploadRecipeImage(
+            @RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "File is empty"));
+        }
+
+        try {
+            String imageUrl = recipeService.uploadRecipeImage(file);
+            Map<String, String> response = new HashMap<>();
+            response.put("url", imageUrl);
+            return ResponseEntity.ok(response);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to upload image: " + e.getMessage()));
+        }
     }
 }

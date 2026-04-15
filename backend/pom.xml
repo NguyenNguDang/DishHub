@@ -30,6 +30,13 @@
 		<mockito.version>5.11.0</mockito.version>
 	</properties>
 	<dependencies>
+        <!--com.cloudinary-->
+        <dependency>
+            <groupId>com.cloudinary</groupId>
+            <artifactId>cloudinary-http44</artifactId>
+            <version>1.39.0</version>
+            <scope>compile</scope>
+        </dependency>
 		<!-- Spring Boot Core -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

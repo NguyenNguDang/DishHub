@@ -14,13 +14,16 @@ import com.nd.dishhub.repository.IngredientRepository;
 import com.nd.dishhub.repository.RecipeIngredientRepository;
 import com.nd.dishhub.repository.RecipeRepository;
 import com.nd.dishhub.repository.UserRepository;
+import com.nd.dishhub.service.FileUploadService;
 import com.nd.dishhub.service.RecipeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 
@@ -33,6 +36,7 @@ public class RecipeServiceImpl implements RecipeService {
     private final UserRepository userRepository;
     private final IngredientRepository ingredientRepository;
     private final RecipeIngredientRepository recipeIngredientRepository;
+    private final FileUploadService fileUploadService;
 
     @Override
     public RecipeResponse create(RecipeRequest request, Long userId) {
@@ -273,6 +277,11 @@ public class RecipeServiceImpl implements RecipeService {
     public Page<RecipeResponse> getRecipesByCategory(String category, Pageable pageable) {
         return recipeRepository.findPublicRecipesByCategory(category, pageable)
                 .map(this::mapToResponse);
+    }
+
+    @Override
+    public String uploadRecipeImage(MultipartFile file) throws IOException {
+        return fileUploadService.uploadFile(file);
     }
 
     private RecipeResponse mapToResponse(RecipeEntity recipe) {
