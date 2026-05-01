@@ -12,23 +12,29 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.GenericField;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "recipes")
 @Getter
 @Setter
+@Builder
+@Indexed
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Table(name = "recipes")
 public class RecipeEntity extends AbstractEntity<Long> {
     
     @Column(name = "title", nullable = false, length = 255)
+    @FullTextField(analyzer = "standard")
     private String title;
     
     @Column(name = "description", length = 500)
+    @FullTextField(analyzer = "standard")
     private String description;
     
     @Column(name = "category")
@@ -56,6 +62,7 @@ public class RecipeEntity extends AbstractEntity<Long> {
     private String instructions;
     
     @Column(name = "is_public", nullable = false)
+    @GenericField
     private Boolean isPublic = false;
     
     @ManyToOne(fetch = FetchType.LAZY)

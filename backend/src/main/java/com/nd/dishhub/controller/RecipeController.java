@@ -8,6 +8,7 @@ import com.nd.dishhub.DTO.response.ReviewResponse;
 import com.nd.dishhub.exception.UnauthorizedException;
 import com.nd.dishhub.model.UserEntity;
 import com.nd.dishhub.repository.UserRepository;
+import com.nd.dishhub.service.RecipeSearchService;
 import com.nd.dishhub.service.RecipeService;
 import com.nd.dishhub.service.ReviewService;
 import jakarta.validation.Valid;
@@ -15,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,8 +32,8 @@ import java.util.Map;
 @RequestMapping("/api/v1/recipes")
 @RequiredArgsConstructor
 public class RecipeController {
-
     private final RecipeService recipeService;
+    private final RecipeSearchService recipeSearchService;
     private final ReviewService reviewService;
     private final UserRepository userRepository;
 
@@ -129,20 +131,14 @@ public class RecipeController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Page<RecipeResponse>> searchRecipes(
-            @RequestParam String query,
-            Pageable pageable) {
-        try {
-            Page<RecipeResponse> response = recipeService.searchRecipes(query, pageable);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            pageable = PageRequest.of(
-                    Math.max(pageable.getPageNumber(), 0),
-                    pageable.getPageSize() > 0 ? pageable.getPageSize() : 10
-            );
-            Page<RecipeResponse> response = recipeService.searchRecipes(query, pageable);
-            return ResponseEntity.ok(response);
-        }
+    public ResponseEntity<Map<String, Object>> searchRecipes(
+            @RequestParam String keyword) {
+        
+        List<RecipeResponse> recipes = recipeSearchService.searchRecipes(keyword);
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", recipes);
+        return ResponseEntity.ok(response);
+        
     }
 
     @GetMapping("/category")

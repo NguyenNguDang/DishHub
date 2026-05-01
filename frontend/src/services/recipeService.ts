@@ -103,9 +103,9 @@ export const recipeService = {
   search: async (query: string): Promise<Recipe[]> => {
     try {
       // Sử dụng dedicated search endpoint từ backend
-      const response = await axiosInstance.get<{ content: Recipe[] }>(`/v1/recipes/search?query=${encodeURIComponent(query)}&page=0&size=50`);
+      const response = await axiosInstance.get<{ content: Recipe[] }>(`/v1/recipes/search?keyword=${encodeURIComponent(query)}`);
       const allRecipes = response.data.content || [];
-      console.log('✅ Searched recipes:', allRecipes);
+      console.log('Searched recipes:', allRecipes);
       return allRecipes;
     } catch (error) {
       console.error('Error searching recipes:', error);
@@ -121,7 +121,7 @@ export const recipeService = {
       // Sử dụng dedicated category endpoint từ backend
       const response = await axiosInstance.get<{ content: Recipe[] }>(`/v1/recipes/category?category=${encodeURIComponent(category)}&page=0&size=50`);
       const allRecipes = response.data.content || [];
-      console.log('📂 Category recipes:', allRecipes);
+      console.log('Category recipes:', allRecipes);
       return allRecipes;
     } catch (error) {
       console.error(`Error fetching recipes by category ${category}:`, error);
@@ -136,7 +136,7 @@ export const recipeService = {
    */
   getRecipeReviews: async (recipeId: string, page = 0, size = 10): Promise<{ content: Review[] }> => {
     try {
-      console.log('📥 Fetching reviews for recipe:', recipeId);
+      console.log('Fetching reviews for recipe:', recipeId);
       const response = await axiosInstance.get<{ content: Review[] }>(
         `/v1/recipes/${recipeId}/reviews?page=${page}&size=${size}`
       );
@@ -152,7 +152,7 @@ export const recipeService = {
    */
   createReview: async (recipeId: string, review: ReviewRequest): Promise<Review> => {
     try {
-      console.log('📝 Creating review for recipe:', recipeId);
+      console.log('Creating review for recipe:', recipeId);
       const response = await axiosInstance.post<Review>(
         `/v1/recipes/${recipeId}/reviews`,
         review

@@ -42,17 +42,17 @@ const RecipeExplorerPage: React.FC = () => {
     queryFn: async () => {
       try {
         if (debouncedSearch) {
-          console.log('🔍 Calling search API:', debouncedSearch);
+          console.log('Calling search API:', debouncedSearch);
           return await recipeService.search(debouncedSearch);
         } else if (filters.category !== 'All') {
-          console.log('📂 Fetching by category:', filters.category);
+          console.log('Fetching by category:', filters.category);
           return await recipeService.getByCategory(filters.category);
         } else {
-          console.log('📋 Fetching all recipes');
+          console.log('Fetching all recipes');
           return await recipeService.getAll();
         }
       } catch (error) {
-        console.error('❌ Error in queryFn:', error);
+        console.error('Error in queryFn:', error);
         throw error;
       }
     },

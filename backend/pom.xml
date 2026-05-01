@@ -30,6 +30,20 @@
 		<mockito.version>5.11.0</mockito.version>
 	</properties>
 	<dependencies>
+        <!-- Source: https://mvnrepository.com/artifact/org.hibernate.search/hibernate-search-backend-lucene -->
+        <dependency>
+            <groupId>org.hibernate.search</groupId>
+            <artifactId>hibernate-search-backend-lucene</artifactId>
+            <version>8.3.0.Final</version>
+            <scope>compile</scope>
+        </dependency>
+        <!-- Source: https://mvnrepository.com/artifact/org.hibernate.search/hibernate-search-mapper-orm -->
+        <dependency>
+            <groupId>org.hibernate.search</groupId>
+            <artifactId>hibernate-search-mapper-orm</artifactId>
+            <version>8.3.0.Final</version>
+            <scope>compile</scope>
+        </dependency>
         <!--com.cloudinary-->
         <dependency>
             <groupId>com.cloudinary</groupId>
