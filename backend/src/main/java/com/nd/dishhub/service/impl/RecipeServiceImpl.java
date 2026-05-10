@@ -280,6 +280,52 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
+    public Page<RecipeResponse> filterRecipes(String category, Integer maxCalories, String ingredients, Pageable pageable) {
+        // For simplicity, fetch recipes by category first, then filter in memory
+        Page<RecipeResponse> recipes;
+        
+        if (category != null && !category.isEmpty() && !"All".equals(category)) {
+            recipes = getRecipesByCategory(category, pageable);
+        } else {
+            recipes = recipeRepository.findByIsPublicTrue(pageable).map(this::mapToResponse);
+        }
+        
+        // Filter by maxCalories
+        if (maxCalories != null && maxCalories > 0) {
+            List<RecipeResponse> filtered = recipes.getContent().stream()
+                    .filter(r -> r.getNutrition() != null
+                            && r.getNutrition().getTotalCalories() != null
+                            && r.getNutrition().getTotalCalories() <= maxCalories)
+                    .toList();
+            return new org.springframework.data.domain.PageImpl<>(
+                    filtered,
+                    pageable,
+                    Math.min(filtered.size(), recipes.getTotalElements())
+            );
+        }
+        
+        // Filter by ingredients (simple search in title/description/tags)
+        if (ingredients != null && !ingredients.isEmpty()) {
+            String[] ingredientList = ingredients.split(",");
+            List<RecipeResponse> filtered = recipes.getContent().stream()
+                    .filter(r -> {
+                        String combined = (r.getTitle() + " " + r.getDescription() + " " + String.join(" ", r.getTags())).toLowerCase();
+                        return java.util.Arrays.stream(ingredientList)
+                                .map(String::trim)
+                                .anyMatch(combined::contains);
+                    })
+                    .toList();
+            return new org.springframework.data.domain.PageImpl<>(
+                    filtered, 
+                    pageable, 
+                    Math.min(filtered.size(), recipes.getTotalElements())
+            );
+        }
+        
+        return recipes;
+    }
+
+    @Override
     public String uploadRecipeImage(MultipartFile file) throws IOException {
         return fileUploadService.uploadFile(file);
     }

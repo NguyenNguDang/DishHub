@@ -38,21 +38,33 @@ const RecipeExplorerPage: React.FC = () => {
    * useQuery sẽ tự động refetch khi dependencies thay đổi
    */
   const { data: recipes = [], isLoading, error } = useQuery({
-    queryKey: ['recipes', debouncedSearch, filters.category],
+    queryKey: ['recipes', debouncedSearch, filters.category, filters.maxCalories, filters.ingredients],
     queryFn: async () => {
       try {
         if (debouncedSearch) {
-          console.log('Calling search API:', debouncedSearch);
+          console.log('🔍 Calling search API:', debouncedSearch);
           return await recipeService.search(debouncedSearch);
-        } else if (filters.category !== 'All') {
-          console.log('Fetching by category:', filters.category);
-          return await recipeService.getByCategory(filters.category);
+        } else if (
+          filters.category !== 'All' ||
+          filters.maxCalories < 1500 ||
+          (filters.ingredients && filters.ingredients.trim())
+        ) {
+          console.log('📂 Filtering recipes:', { 
+            category: filters.category, 
+            maxCalories: filters.maxCalories,
+            ingredients: filters.ingredients 
+          });
+          return await recipeService.filterRecipes(
+            filters.category,
+            filters.maxCalories,
+            filters.ingredients
+          );
         } else {
-          console.log('Fetching all recipes');
+          console.log('📋 Fetching all recipes');
           return await recipeService.getAll();
         }
       } catch (error) {
-        console.error('Error in queryFn:', error);
+        console.error('❌ Error in queryFn:', error);
         throw error;
       }
     },

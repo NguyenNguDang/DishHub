@@ -145,17 +145,18 @@ public class RecipeController {
     public ResponseEntity<Page<RecipeResponse>> getRecipesByCategory(
             @RequestParam String category,
             Pageable pageable) {
-        try {
-            Page<RecipeResponse> response = recipeService.getRecipesByCategory(category, pageable);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            pageable = PageRequest.of(
-                    Math.max(pageable.getPageNumber(), 0),
-                    pageable.getPageSize() > 0 ? pageable.getPageSize() : 10
-            );
-            Page<RecipeResponse> response = recipeService.getRecipesByCategory(category, pageable);
-            return ResponseEntity.ok(response);
-        }
+        Page<RecipeResponse> response = recipeService.getRecipesByCategory(category, pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<Page<RecipeResponse>> filterRecipes(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) Integer maxCalories,
+            @RequestParam(required = false) String ingredients,
+            Pageable pageable) {
+        Page<RecipeResponse> response = recipeService.filterRecipes(category, maxCalories, ingredients, pageable);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/user/{userId}")
