@@ -129,6 +129,34 @@ export const recipeService = {
     }
   },
 
+  /**
+   * Lọc công thức theo nhiều tiêu chí (category, calories, ingredients)
+   */
+  filterRecipes: async (
+    category?: string,
+    maxCalories?: number,
+    ingredients?: string
+  ): Promise<Recipe[]> => {
+    try {
+      const params = new URLSearchParams();
+      if (category && category !== 'All') params.append('category', category);
+      if (maxCalories && maxCalories < 1500) params.append('maxCalories', maxCalories.toString());
+      if (ingredients && ingredients.trim()) params.append('ingredients', ingredients);
+      
+      const queryString = params.toString();
+      const url = `/v1/recipes/filter?${queryString}&page=0&size=50`;
+      
+      console.log('Filtering recipes with:', { category, maxCalories, ingredients });
+      const response = await axiosInstance.get<{ content: Recipe[] }>(url);
+      const allRecipes = response.data.content || [];
+      console.log('Filtered recipes:', allRecipes);
+      return allRecipes;
+    } catch (error) {
+      console.error('Error filtering recipes:', error);
+      throw error;
+    }
+  },
+
   // ==================== REVIEW APIs ====================
 
   /**

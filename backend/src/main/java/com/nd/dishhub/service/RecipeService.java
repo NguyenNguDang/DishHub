@@ -42,6 +42,16 @@ public interface RecipeService {
       */
      Page<RecipeResponse> getRecipesByCategory(String category, Pageable pageable);
 
+    /**
+     * Lọc công thức theo nhiều tiêu chí
+     * @param category Danh mục (optional)
+     * @param maxCalories Calories tối đa (optional)
+     * @param ingredients Danh sách nguyên liệu (optional, comma-separated)
+     * @param pageable Thông tin phân trang
+     * @return Page<RecipeResponse> chứa các công thức phù hợp
+     */
+    Page<RecipeResponse> filterRecipes(String category, Integer maxCalories, String ingredients, Pageable pageable);
+
     // ==================== CUSTOM RECIPE METHODS ====================
 
     /**
