@@ -11,6 +11,7 @@ import WeeklyMealPlannerPage from '../pages/WeeklyMealPlannerPage';
 import MyRecipesPage from '../pages/MyRecipesPage';
 import { AddRecipePage } from '../pages/AddRecipePage';
 import { EditRecipePage } from '../pages/EditRecipePage';
+import FavoritesPage from '../pages/FavoritesPage';
 import { NotFound } from '../pages/NotFoundPage';
 
 export const routes: RouteObject[] = [
@@ -38,14 +39,18 @@ export const routes: RouteObject[] = [
         path: '/recipes/edit/:id',
         element: <EditRecipePage />,
       },
-      {
-        path: '/my-recipes',
-        element: <MyRecipesPage />,
-      },
-      {
-        path: '/shopping-list',
-        element: <ShoppingListPage />,
-      },
+       {
+         path: '/my-recipes',
+         element: <MyRecipesPage />,
+       },
+       {
+         path: '/favorites',
+         element: <FavoritesPage />,
+       },
+       {
+         path: '/shopping-list',
+         element: <ShoppingListPage />,
+       },
       {
         path: '/profile',
         element: <UserProfilePage />,

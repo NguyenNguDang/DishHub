@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { recipeService } from '../services';
+import { useAddFavorite, useGetFavorites, useRemoveFavorite } from '../hooks';
 
 interface Filters {
   search: string;
@@ -21,6 +22,12 @@ const RecipeExplorerPage: React.FC = () => {
   // State riêng cho query (dùng để debounce)
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [pendingFavorites, setPendingFavorites] = useState<Set<string>>(new Set());
+
+  const addFavoriteMutation = useAddFavorite();
+  const removeFavoriteMutation = useRemoveFavorite();
+
+  const { data: favoriteRecipes = [] } = useGetFavorites('me', 0, 200);
 
   const categories = ['All', 'Breakfast', 'Vegan', 'Quick & Easy', 'Gluten-Free', 'Desserts'];
 
@@ -32,6 +39,11 @@ const RecipeExplorerPage: React.FC = () => {
 
     return () => clearTimeout(timer);
   }, [filters.search]);
+
+  useEffect(() => {
+    const nextFavorites = new Set(favoriteRecipes.map((recipe) => recipe.id));
+    setFavorites(nextFavorites);
+  }, [favoriteRecipes]);
 
   /**
    * Fetch recipes dựa trên filters
@@ -72,19 +84,39 @@ const RecipeExplorerPage: React.FC = () => {
     gcTime: 10 * 60 * 1000, // Garbage collect 10 phút
   });
 
-  const toggleFavorite = (recipeId: string) => {
-    const newFavorites = new Set(favorites);
-    if (newFavorites.has(recipeId)) {
-      newFavorites.delete(recipeId);
-    } else {
-      newFavorites.add(recipeId);
+  const toggleFavorite = async (event: React.MouseEvent, recipeId: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const isFavorite = favorites.has(recipeId);
+    setPendingFavorites((prev) => new Set(prev).add(recipeId));
+
+    try {
+      if (isFavorite) {
+        await removeFavoriteMutation.mutateAsync(recipeId);
+        setFavorites((prev) => {
+          const next = new Set(prev);
+          next.delete(recipeId);
+          return next;
+        });
+      } else {
+        await addFavoriteMutation.mutateAsync(recipeId);
+        setFavorites((prev) => new Set(prev).add(recipeId));
+      }
+    } catch (error) {
+      console.error('❌ Failed to toggle favorite:', error);
+    } finally {
+      setPendingFavorites((prev) => {
+        const next = new Set(prev);
+        next.delete(recipeId);
+        return next;
+      });
     }
-    setFavorites(newFavorites);
   };
 
   // Handle search submission
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSearchSubmit = (event: React.SyntheticEvent) => {
+    event.preventDefault();
     if (!filters.search.trim()) {
       // Clear search
       setDebouncedSearch('');
@@ -151,9 +183,9 @@ const RecipeExplorerPage: React.FC = () => {
               placeholder="Search recipes..."
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  handleSearchSubmit(e as any);
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  handleSearchSubmit(event);
                 }
               }}
               className="w-full pl-10 pr-4 py-3 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400"
@@ -282,8 +314,9 @@ const RecipeExplorerPage: React.FC = () => {
                 {/* Favorite Button */}
                 <div className="absolute top-3 right-3">
                   <button
-                    onClick={() => toggleFavorite(recipe.id)}
-                    className="size-9 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center transition-colors shadow-sm"
+                    onClick={(event) => toggleFavorite(event, recipe.id)}
+                    disabled={pendingFavorites.has(recipe.id)}
+                    className="size-9 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center transition-colors shadow-sm disabled:opacity-50"
                     style={{ color: favorites.has(recipe.id) ? '#ef4444' : '#94a3b8' }}
                   >
                     <span className="material-symbols-outlined text-xl" style={{ fill: favorites.has(recipe.id) ? '1' : '0' }}>

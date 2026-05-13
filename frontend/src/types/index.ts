@@ -145,3 +145,17 @@ export interface CreateShoppingListItemRequest {
 export interface UpdateShoppingListItemRequest extends Partial<CreateShoppingListItemRequest> {
   isChecked?: boolean;
 }
+
+export interface FavoriteRecipce {
+    id: string;
+    recipeId: string;
+    userId: string;
+    addedAt: string;
+    recipe: Recipe;
+}
+
+export interface FavoritesFilter {
+    search: string;
+    category: string;
+    sortBy: 'newest' | 'oldest' | 'title' | 'rating';
+}

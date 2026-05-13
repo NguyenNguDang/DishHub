@@ -1,12 +1,53 @@
 import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import type { Recipe } from '../../types';
 import { formatTime } from '../../utils/formatters';
+import { useAddFavorite, useRemoveFavorite } from '../../hooks';
+import { favoritesService } from '../../services';
 
 interface RecipeCardProps {
   recipe: Recipe;
 }
 
 export const RecipeCard = ({ recipe }: RecipeCardProps) => {
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+  const addFavoriteMutation = useAddFavorite();
+  const removeFavoriteMutation = useRemoveFavorite();
+
+  // Check nếu recipe đã yêu thích khi component mount
+  useEffect(() => {
+    const checkFavorite = async () => {
+      try {
+        const fav = await favoritesService.isFavorite(recipe.id);
+        setIsFavorite(fav);
+      } catch (error) {
+        console.error('Error checking favorite:', error);
+      } finally {
+        setIsChecking(false);
+      }
+    };
+    checkFavorite();
+  }, [recipe.id]);
+
+  // Toggle favorite
+  const handleToggleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      if (isFavorite) {
+        await removeFavoriteMutation.mutateAsync(recipe.id);
+        setIsFavorite(false);
+      } else {
+        await addFavoriteMutation.mutateAsync(recipe.id);
+        setIsFavorite(true);
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
+  };
+
   return (
     <Link to={`/recipes/${recipe.id}`}>
       <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
@@ -20,6 +61,18 @@ export const RecipeCard = ({ recipe }: RecipeCardProps) => {
           <div className="absolute top-2 right-2 bg-white rounded-full px-3 py-1 text-sm font-medium">
             ⭐ {recipe.rating}
           </div>
+
+          {/* Favorite Button */}
+          <button
+            onClick={handleToggleFavorite}
+            disabled={isChecking || addFavoriteMutation.isPending || removeFavoriteMutation.isPending}
+            className="absolute top-2 left-2 bg-white rounded-full p-2 hover:bg-gray-100 transition-colors shadow-md disabled:opacity-50"
+            title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+          >
+            <span className={`text-xl ${isFavorite ? 'text-red-500' : 'text-gray-400'}`}>
+              {isFavorite ? '❤️' : '🤍'}
+            </span>
+          </button>
         </div>
 
         {/* Content */}

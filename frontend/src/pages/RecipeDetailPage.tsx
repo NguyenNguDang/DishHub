@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { recipeService, type Review, type ReviewRequest } from '../services';
-import type { Recipe } from '../types';
+import { favoritesService } from '../services';
+import { useAddFavorite, useRemoveFavorite } from '../hooks';
 
 const RecipeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -11,6 +12,11 @@ const RecipeDetailPage: React.FC = () => {
   const [checkedIngredients, setCheckedIngredients] = useState<Set<string>>(new Set());
   const [reviewText, setReviewText] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isCheckingFavorite, setIsCheckingFavorite] = useState(true);
+  
+  const addFavoriteMutation = useAddFavorite();
+  const removeFavoriteMutation = useRemoveFavorite();
 
   // Fetch recipe detail
   const { data: recipe, isLoading, error } = useQuery({
@@ -23,6 +29,23 @@ const RecipeDetailPage: React.FC = () => {
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
   });
+
+  // Check nếu recipe đã favorite
+  useEffect(() => {
+    const checkFavorite = async () => {
+      if (!id) return;
+      try {
+        setIsCheckingFavorite(true);
+        const fav = await favoritesService.isFavorite(id);
+        setIsFavorite(fav);
+      } catch (error) {
+        console.error('Error checking favorite:', error);
+      } finally {
+        setIsCheckingFavorite(false);
+      }
+    };
+    checkFavorite();
+  }, [id]);
 
   // Fetch reviews
   const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
@@ -64,6 +87,24 @@ const RecipeDetailPage: React.FC = () => {
       rating: reviewRating,
       comment: reviewText,
     });
+  };
+
+  // Toggle favorite
+  const handleToggleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!id) return;
+
+    try {
+      if (isFavorite) {
+        await removeFavoriteMutation.mutateAsync(id);
+        setIsFavorite(false);
+      } else {
+        await addFavoriteMutation.mutateAsync(id);
+        setIsFavorite(true);
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
   };
 
   if (!id) {
@@ -156,17 +197,24 @@ const RecipeDetailPage: React.FC = () => {
             </div>
             <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">DishHub</h1>
           </div>
-          <div className="flex items-center gap-4">
-            <button className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-colors">
-              <span className="material-symbols-outlined">favorite</span>
-            </button>
-            <button className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-colors">
-              <span className="material-symbols-outlined">share</span>
-            </button>
-            <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-orange-500/20">
-              <img alt="Profile" className="h-full w-full object-cover" src="https://ui-avatars.com/api/?name=User&background=random" />
-            </div>
-          </div>
+           <div className="flex items-center gap-4">
+             <button 
+               onClick={handleToggleFavorite}
+               disabled={isCheckingFavorite || addFavoriteMutation.isPending || removeFavoriteMutation.isPending}
+               className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-colors disabled:opacity-50"
+               title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+             >
+               <span className={`material-symbols-outlined ${isFavorite ? 'text-red-500' : ''}`} style={{ fill: isFavorite ? '1' : '0' }}>
+                 favorite
+               </span>
+             </button>
+             <button className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-colors">
+               <span className="material-symbols-outlined">share</span>
+             </button>
+             <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-orange-500/20">
+               <img alt="Profile" className="h-full w-full object-cover" src="https://ui-avatars.com/api/?name=User&background=random" />
+             </div>
+           </div>
         </div>
       </header>
 

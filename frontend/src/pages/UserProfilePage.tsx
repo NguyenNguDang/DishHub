@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useCurrentProfile, useUpdateProfile, useUploadAvatar } from '../hooks/useUserProfile';
-import type { UserProfile } from '../types';
 
 interface ProfileFormData {
   firstName: string;
@@ -13,12 +13,12 @@ interface ProfileFormData {
 }
 
 export const UserProfilePage: React.FC = () => {
-  // ✅ API hooks
+  //API hooks
   const { data: currentProfile, isLoading, error } = useCurrentProfile();
   const updateProfileMutation = useUpdateProfile();
   const uploadAvatarMutation = useUploadAvatar();
 
-  // ✅ Form state
+  //Form state
   const [formData, setFormData] = useState<ProfileFormData>({
     firstName: '',
     lastName: '',
@@ -32,7 +32,7 @@ export const UserProfilePage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState('');
 
-  // ✅ Initialize form from API data
+  // Initialize form from API data
   useEffect(() => {
     if (currentProfile) {
       setFormData({
@@ -93,7 +93,7 @@ export const UserProfilePage: React.FC = () => {
     }
   };
 
-  // ✅ Handle avatar upload
+  // Handle avatar upload
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -108,7 +108,7 @@ export const UserProfilePage: React.FC = () => {
     }
   };
 
-  // ✅ Show loading state
+  // Show loading state
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background-light dark:bg-background-dark flex items-center justify-center">
@@ -120,7 +120,7 @@ export const UserProfilePage: React.FC = () => {
     );
   }
 
-  // ✅ Show error state
+  // Show error state
   if (error) {
     return (
       <div className="min-h-screen bg-background-light dark:bg-background-dark flex items-center justify-center">
@@ -200,13 +200,13 @@ export const UserProfilePage: React.FC = () => {
                   <span className="material-symbols-outlined">person</span>
                   Personal Info
                 </a>
-                <a
-                  className="flex items-center gap-3 px-6 py-4 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-l-4 border-transparent"
-                  href="#"
+                <Link
+                    to="/favorites"
+                    className="flex items-center gap-3 px-6 py-4 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-l-4 border-transparent"
                 >
-                  <span className="material-symbols-outlined">favorite</span>
-                  Saved Recipes
-                </a>
+                    <span className="material-symbols-outlined">favorite</span>
+                    Saved Recipes
+                </Link>
                 <a
                   className="flex items-center gap-3 px-6 py-4 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-l-4 border-transparent"
                   href="#"
