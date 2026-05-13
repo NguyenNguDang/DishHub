@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useGetUserRecipes, useDeleteRecipe} from '../hooks';
+import { useGetUserRecipes, useDeleteRecipe, useAddFavorite, useGetFavorites, useRemoveFavorite } from '../hooks';
 
 
 interface Filters {
@@ -17,22 +17,49 @@ const MyRecipesPage: React.FC = () => {
   });
 
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [pendingFavorites, setPendingFavorites] = useState<Set<string>>(new Set());
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   // Mutations
   const deleteRecipeMutation = useDeleteRecipe();
+  const addFavoriteMutation = useAddFavorite();
+  const removeFavoriteMutation = useRemoveFavorite();
+
+  const { data: favoriteRecipes = [] } = useGetFavorites('me', 0, 200);
 
   // Fetch user recipes from API
   const { data: userRecipes = [], isLoading, error } = useGetUserRecipes('me', 0, 100);
 
-  const toggleFavorite = (recipeId: string) => {
-    const newFavorites = new Set(favorites);
-    if (newFavorites.has(recipeId)) {
-      newFavorites.delete(recipeId);
-    } else {
-      newFavorites.add(recipeId);
+  useEffect(() => {
+    const nextFavorites = new Set(favoriteRecipes.map((recipe) => recipe.id));
+    setFavorites(nextFavorites);
+  }, [favoriteRecipes]);
+
+  const toggleFavorite = async (recipeId: string) => {
+    const isFavorite = favorites.has(recipeId);
+    setPendingFavorites((prev) => new Set(prev).add(recipeId));
+
+    try {
+      if (isFavorite) {
+        await removeFavoriteMutation.mutateAsync(recipeId);
+        setFavorites((prev) => {
+          const next = new Set(prev);
+          next.delete(recipeId);
+          return next;
+        });
+      } else {
+        await addFavoriteMutation.mutateAsync(recipeId);
+        setFavorites((prev) => new Set(prev).add(recipeId));
+      }
+    } catch (err) {
+      console.error('Error toggling favorite:', err);
+    } finally {
+      setPendingFavorites((prev) => {
+        const next = new Set(prev);
+        next.delete(recipeId);
+        return next;
+      });
     }
-    setFavorites(newFavorites);
   };
 
   const handleDeleteRecipe = async (recipeId: string) => {
@@ -284,7 +311,8 @@ const MyRecipesPage: React.FC = () => {
                   <div className="absolute top-3 right-3">
                     <button
                       onClick={() => toggleFavorite(recipe.id)}
-                      className="size-9 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center transition-colors shadow-sm"
+                      disabled={pendingFavorites.has(recipe.id)}
+                      className="size-9 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center transition-colors shadow-sm disabled:opacity-50"
                       style={{
                         color: favorites.has(recipe.id) ? '#ef4444' : '#94a3b8',
                       }}
@@ -417,4 +445,3 @@ const MyRecipesPage: React.FC = () => {
 };
 
 export default MyRecipesPage;
-

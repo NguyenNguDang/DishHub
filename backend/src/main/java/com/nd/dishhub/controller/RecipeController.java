@@ -8,6 +8,7 @@ import com.nd.dishhub.DTO.response.ReviewResponse;
 import com.nd.dishhub.exception.UnauthorizedException;
 import com.nd.dishhub.model.UserEntity;
 import com.nd.dishhub.repository.UserRepository;
+import com.nd.dishhub.service.FavoriteService;
 import com.nd.dishhub.service.RecipeSearchService;
 import com.nd.dishhub.service.RecipeService;
 import com.nd.dishhub.service.ReviewService;
@@ -36,7 +37,8 @@ public class RecipeController {
     private final RecipeSearchService recipeSearchService;
     private final ReviewService reviewService;
     private final UserRepository userRepository;
-
+    private final FavoriteService favoriteService;
+    
     @PostMapping
     public ResponseEntity<RecipeResponse> create(@Valid @RequestBody RecipeRequest request, Principal principal) {
         // Get userId from authenticated user
@@ -272,5 +274,55 @@ public class RecipeController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to upload image: " + e.getMessage()));
         }
+    }
+
+    // ==================== FAVORITE ENDPOINTS ====================
+
+    @PostMapping("/{id}/favorite")
+    public ResponseEntity<Map<String, String>> addFavorite(
+            @PathVariable Long id,
+            Principal principal
+    ) {
+        try {
+            UserEntity user = userRepository.findByEmail(principal.getName())
+                    .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+            favoriteService.addFavorite(user.getId(), id);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(Map.of("message", "Recipe added to favorites"));
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("already favorited")) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(Map.of("error", e.getMessage()));
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/{id}/favorite")
+    public ResponseEntity<Map<String, String>> removeFavorite(
+            @PathVariable Long id,
+            Principal principal
+    ) {
+        try {
+            UserEntity user = userRepository.findByEmail(principal.getName())
+                    .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+            favoriteService.removeFavorite(user.getId(), id);
+            return ResponseEntity.ok(Map.of("message", "Recipe removed from favorites"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/{id}/favorite")
+    public ResponseEntity<Map<String, Boolean>> isFavorite(
+            @PathVariable Long id,
+            Principal principal
+    ) {
+        UserEntity user = userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+        boolean isFav = favoriteService.isFavorite(user.getId(), id);
+        return ResponseEntity.ok(Map.of("isFavorite", isFav));
     }
 }

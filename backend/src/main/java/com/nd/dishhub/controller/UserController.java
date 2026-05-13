@@ -1,11 +1,14 @@
 package com.nd.dishhub.controller;
 
 import com.nd.dishhub.DTO.request.UserUpdateRequest;
+import com.nd.dishhub.DTO.response.RecipeResponse;
 import com.nd.dishhub.DTO.response.UserResponse;
+import com.nd.dishhub.service.FavoriteService;
 import com.nd.dishhub.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +24,7 @@ import java.util.Map;
 public class UserController {
     
     private final UserService userService;
+    private final FavoriteService favoriteService;
     
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getById(@PathVariable Long id) {
@@ -102,5 +106,44 @@ public class UserController {
         Map<String, String> response = new HashMap<>();
         response.put("url", avatarUrl);
         return ResponseEntity.ok(response);
+    }
+
+    // ==================== FAVORITE ENDPOINTS ====================
+
+    @GetMapping("/me/favorites")
+    public ResponseEntity<Page<RecipeResponse>> getMyFavorites(
+            Principal principal,
+            Pageable pageable
+    ) {
+        Long userId = userService.getByEmail(principal.getName()).getId();
+        try {
+            Page<RecipeResponse> response = favoriteService.getUserFavorites(userId, pageable);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            pageable = PageRequest.of(
+                    Math.max(pageable.getPageNumber(), 0),
+                    pageable.getPageSize() > 0 ? pageable.getPageSize() : 10
+            );
+            Page<RecipeResponse> response = favoriteService.getUserFavorites(userId, pageable);
+            return ResponseEntity.ok(response);
+        }
+    }
+
+    @GetMapping("/{userId}/favorites")
+    public ResponseEntity<Page<RecipeResponse>> getUserFavorites(
+            @PathVariable Long userId,
+            Pageable pageable
+    ) {
+        try {
+            Page<RecipeResponse> response = favoriteService.getUserFavorites(userId, pageable);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            pageable = PageRequest.of(
+                    Math.max(pageable.getPageNumber(), 0),
+                    pageable.getPageSize() > 0 ? pageable.getPageSize() : 10
+            );
+            Page<RecipeResponse> response = favoriteService.getUserFavorites(userId, pageable);
+            return ResponseEntity.ok(response);
+        }
     }
 }
