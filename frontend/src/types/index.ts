@@ -131,9 +131,9 @@ export interface CreateRecipeRequest {
   instructions: string[];
 }
 
-export interface UpdateRecipeRequest extends Partial<CreateRecipeRequest> {}
+export type UpdateRecipeRequest = Partial<CreateRecipeRequest>;
 
-export interface UpdateUserProfileRequest extends Partial<Omit<UserProfile, 'id' | 'createdAt'>> {}
+export type UpdateUserProfileRequest = Partial<Omit<UserProfile, 'id' | 'createdAt'>>;
 
 export interface CreateShoppingListItemRequest {
   name: string;
