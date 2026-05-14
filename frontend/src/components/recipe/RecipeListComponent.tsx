@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useGetRecipes, useDeleteRecipe } from '../../hooks/useRecipeApi';
-import type { Recipe } from '../../types';
+import type { Recipe, Ingredient } from '../../types';
 
 /**
  * Component hiển thị danh sách công thức
@@ -250,7 +250,7 @@ const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({ recipeId, onClose
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-3">Nguyên Liệu</h3>
               <ul className="space-y-2">
-                {recipe.ingredients.map((ingredient: any) => (
+                {recipe.ingredients.map((ingredient: Ingredient) => (
                   <li key={ingredient.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                     <span className="text-gray-800">{ingredient.name}</span>
                     <span className="text-gray-600 font-medium">
@@ -303,4 +303,3 @@ const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({ recipeId, onClose
     </div>
   );
 };
-

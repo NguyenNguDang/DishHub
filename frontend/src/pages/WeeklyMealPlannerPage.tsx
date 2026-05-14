@@ -1,4 +1,4 @@
-import React, {useMemo, useState, useEffect} from 'react';
+import React, {useMemo, useState} from 'react';
 import {useGetRecipes, useGetWeeklyMealPlans, useCreateMealPlan, useDeleteMealPlanByDateAndType} from '../hooks';
 import type {Recipe} from '../types';
 
@@ -26,8 +26,11 @@ interface Day {
 
 const WeeklyMealPlannerPage: React.FC = () => {
   // API hooks
-  const { data: recipesData, isLoading: isLoadingRecipes } = useGetRecipes();
+  const { data: recipesData } = useGetRecipes();
   const recipes = useMemo(() => recipesData || [], [recipesData]);
+  const recipesById = useMemo(() => {
+    return new Map(recipes.map((recipe) => [String(recipe.id), recipe]));
+  }, [recipes]);
 
   // Get current week's Monday
   const getCurrentWeekMonday = () => {
@@ -42,8 +45,9 @@ const WeeklyMealPlannerPage: React.FC = () => {
   const weekStartDate = getCurrentWeekMonday();
 
   // Fetch weekly meal plans
-  const { data: weeklyMealPlans, isLoading: isLoadingMealPlans } = useGetWeeklyMealPlans(weekStartDate);
-  
+  const { data: weeklyMealPlans } = useGetWeeklyMealPlans(weekStartDate);
+  const weeklyMealPlansSafe = useMemo(() => weeklyMealPlans ?? [], [weeklyMealPlans]);
+
   // Mutations
   const createMealPlanMutation = useCreateMealPlan({
     onSuccess: () => {
@@ -63,8 +67,8 @@ const WeeklyMealPlannerPage: React.FC = () => {
     },
   });
 
-  // State management - Initialize with empty days, then populate from API
-  const [days, setDays] = useState<Day[]>([
+  // Base day structure for UI
+  const baseDays = useMemo<Day[]>(() => [
     {
       name: 'Monday',
       calories: 2100,
@@ -73,7 +77,7 @@ const WeeklyMealPlannerPage: React.FC = () => {
       carbs: 220,
       meals: {
         breakfast: null,
-        lunch: { id: 'sample-1', name: 'Quinoa Buddha Bowl', calories: 450, image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCEXah1rF-QTmLAzoy6GV8bvRwtU1K0eyWYFqra0Sx0DQXozNWbsYEAA856FsgkqCbJ1EqaEWPWDeGJ_VPYJdoiHq2gaHX43yL2bISt7UZU-SSS33zhBPh_M7MLiGzfvzDnOdATkqWRujNTZz-nG3LddYML5kM2nGGc6bazOPH9qP5ILS-hwZMBPghpOaSnOvYpaRky3uC6-uaXS0cAt7--oR5BH8sTA6gNTsgYXsvzcNOsQmF2mFd8w1Eax4n8xtc6hTqFuDBlS1YZ' },
+        lunch: null,
         dinner: null,
         snack: null,
       },
@@ -127,50 +131,53 @@ const WeeklyMealPlannerPage: React.FC = () => {
       meals: { breakfast: null, lunch: null, dinner: null, snack: null },
       isHighlight: true,
     },
-  ]);
+  ], []);
 
-  // Load meal plans from API when component mounts or week changes
-  useEffect(() => {
-    if (weeklyMealPlans && weeklyMealPlans.length > 0) {
-      // Map API meal plans to UI state
-      const updatedDays = days.map(day => {
-        const dayMealPlans = weeklyMealPlans.filter(mp => {
-          // Parse plan date and compare with day
-          const mealPlanDate = new Date(mp.planDate);
-          const dayDate = new Date();
-          const dayOfWeek = dayDate.getDay();
-          const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-          dayDate.setDate(dayDate.getDate() - daysFromMonday);
+  const [optimisticMeals, setOptimisticMeals] = useState<Record<string, Meal | null>>({});
 
-          // Get the target date for this day
-          const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-          const dayIndex = daysOfWeek.indexOf(day.name);
-          const targetDate = new Date(dayDate);
-          targetDate.setDate(dayDate.getDate() + (dayIndex === 0 ? 6 : dayIndex - 1));
+  const plannedDays = useMemo(() => {
+    return baseDays.map((day) => {
+      const dayMealPlans = weeklyMealPlansSafe.filter((mp) => {
+        // Parse plan date and compare with day
+        const mealPlanDate = new Date(mp.planDate);
+        const dayDate = new Date();
+        const dayOfWeek = dayDate.getDay();
+        const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        dayDate.setDate(dayDate.getDate() - daysFromMonday);
 
-          return mealPlanDate.toDateString() === targetDate.toDateString();
-        });
+        // Get the target date for this day
+        const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const dayIndex = daysOfWeek.indexOf(day.name);
+        const targetDate = new Date(dayDate);
+        targetDate.setDate(dayDate.getDate() + (dayIndex === 0 ? 6 : dayIndex - 1));
 
-        // Create updated meals object
-        const updatedMeals = { ...day.meals };
-        dayMealPlans.forEach(mp => {
-          const mealType = mp.mealType.toLowerCase() as keyof typeof updatedMeals;
-          if (mealType in updatedMeals) {
-            updatedMeals[mealType] = {
-              id: mp.recipeId.toString(),
-              name: mp.recipeName,
-              calories: 0, // Could fetch from recipe if needed
-              image: mp.recipeImage || 'https://via.placeholder.com/300',
-            };
-          }
-        });
-
-        return { ...day, meals: updatedMeals };
+        return mealPlanDate.toDateString() === targetDate.toDateString();
       });
 
-      setDays(updatedDays);
-    }
-  }, [weeklyMealPlans]);
+      const updatedMeals = { ...day.meals };
+      dayMealPlans.forEach((mp) => {
+        const mealType = mp.mealType.toLowerCase() as keyof typeof updatedMeals;
+        if (mealType in updatedMeals) {
+          updatedMeals[mealType] = {
+            id: mp.recipeId.toString(),
+            name: mp.recipeName,
+            calories: 0, // Could fetch from recipe if needed
+            image: mp.recipeImage || 'https://via.placeholder.com/300',
+          };
+        }
+      });
+
+      (['breakfast', 'lunch', 'dinner', 'snack'] as const).forEach((mealType) => {
+        const overrideKey = `${day.name}:${mealType}`;
+        if (Object.prototype.hasOwnProperty.call(optimisticMeals, overrideKey)) {
+          updatedMeals[mealType] = optimisticMeals[overrideKey];
+        }
+      });
+
+      return { ...day, meals: updatedMeals };
+    });
+  }, [baseDays, weeklyMealPlansSafe, optimisticMeals]);
+
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [selectedMealType, setSelectedMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack' | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -186,6 +193,20 @@ const WeeklyMealPlannerPage: React.FC = () => {
   const handleSelectRecipe = (recipe: Recipe) => {
     if (selectedDay === null || !selectedMealType) return;
 
+    const selectedDayData = plannedDays[selectedDay];
+    if (!selectedDayData) return;
+
+    const optimisticKey = `${selectedDayData.name}:${selectedMealType}`;
+    setOptimisticMeals((prev) => ({
+      ...prev,
+      [optimisticKey]: {
+        id: recipe.id,
+        name: recipe.title,
+        calories: Math.round(recipe.nutrition?.totalCalories || 0),
+        image: recipe.image || 'https://via.placeholder.com/300',
+      },
+    }));
+
     // Prepare date for API
     const today = new Date();
     const dayOfWeek = today.getDay();
@@ -194,7 +215,7 @@ const WeeklyMealPlannerPage: React.FC = () => {
     monday.setDate(today.getDate() - daysFromMonday);
 
     const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const dayIndex = daysOfWeek.indexOf(days[selectedDay].name);
+    const dayIndex = daysOfWeek.indexOf(selectedDayData.name);
     const planDate = new Date(monday);
     planDate.setDate(monday.getDate() + (dayIndex === 0 ? 6 : dayIndex - 1));
     const planDateStr = planDate.toISOString().split('T')[0];
@@ -208,24 +229,31 @@ const WeeklyMealPlannerPage: React.FC = () => {
       },
       {
         onSuccess: () => {
-          // Update local state for immediate UI feedback
-          const newDays = [...days];
-          newDays[selectedDay].meals[selectedMealType] = {
-            id: recipe.id,
-            name: recipe.title,
-            calories: Math.round(recipe.nutrition?.totalCalories || 0),
-            image: recipe.image || 'https://via.placeholder.com/300',
-          };
-          setDays(newDays);
           setShowModal(false);
           setSelectedDay(null);
           setSelectedMealType(null);
+        },
+        onError: () => {
+          setOptimisticMeals((prev) => {
+            const next = { ...prev };
+            delete next[optimisticKey];
+            return next;
+          });
         },
       }
     );
   };
 
   const handleRemoveMeal = (dayIndex: number, mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack') => {
+    const selectedDayData = plannedDays[dayIndex];
+    if (!selectedDayData) return;
+
+    const optimisticKey = `${selectedDayData.name}:${mealType}`;
+    setOptimisticMeals((prev) => ({
+      ...prev,
+      [optimisticKey]: null,
+    }));
+
     // Prepare date for API
     const today = new Date();
     const dayOfWeek = today.getDay();
@@ -234,8 +262,7 @@ const WeeklyMealPlannerPage: React.FC = () => {
     monday.setDate(today.getDate() - daysFromMonday);
 
     const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const dayName = days[dayIndex].name;
-    const dayNameIndex = daysOfWeek.indexOf(dayName);
+    const dayNameIndex = daysOfWeek.indexOf(selectedDayData.name);
     const planDate = new Date(monday);
     planDate.setDate(monday.getDate() + (dayNameIndex === 0 ? 6 : dayNameIndex - 1));
     const planDateStr = planDate.toISOString().split('T')[0];
@@ -247,18 +274,59 @@ const WeeklyMealPlannerPage: React.FC = () => {
         mealType: mealType,
       },
       {
-        onSuccess: () => {
-          // Update local state
-          const newDays = [...days];
-          newDays[dayIndex].meals[mealType] = null;
-          setDays(newDays);
+        onSuccess: () => {},
+        onError: () => {
+          setOptimisticMeals((prev) => {
+            const next = { ...prev };
+            delete next[optimisticKey];
+            return next;
+          });
         },
       }
     );
   };
 
-  const totalGroceryItems = 42;
-  const weeklyPrepTime = 4.5;
+  const totalGroceryItems = useMemo(() => {
+    return weeklyMealPlansSafe.reduce((sum, plan) => {
+      const recipe = recipesById.get(String(plan.recipeId));
+      return sum + (recipe?.ingredients?.length || 0);
+    }, 0);
+  }, [weeklyMealPlansSafe, recipesById]);
+
+  const weeklyPrepTime = useMemo(() => {
+    const totalMinutes = weeklyMealPlansSafe.reduce((sum, plan) => {
+      const recipe = recipesById.get(String(plan.recipeId));
+      const prep = recipe?.prepTime || 0;
+      const cook = recipe?.cookTime || 0;
+      return sum + prep + cook;
+    }, 0);
+    return Number((totalMinutes / 60).toFixed(1));
+  }, [weeklyMealPlansSafe, recipesById]);
+
+  const macroBalance = useMemo(() => {
+    const totals = weeklyMealPlansSafe.reduce(
+      (sum, plan) => {
+        const recipe = recipesById.get(String(plan.recipeId));
+        return {
+          protein: sum.protein + (recipe?.nutrition?.totalProtein || 0),
+          fat: sum.fat + (recipe?.nutrition?.totalFat || 0),
+          carbs: sum.carbs + (recipe?.nutrition?.totalCarbs || 0),
+        };
+      },
+      { protein: 0, fat: 0, carbs: 0 }
+    );
+
+    const totalMacros = totals.protein + totals.fat + totals.carbs;
+    if (totalMacros <= 0) {
+      return { protein: 0, fat: 0, carbs: 0 };
+    }
+
+    const protein = Math.round((totals.protein / totalMacros) * 100);
+    const fat = Math.round((totals.fat / totalMacros) * 100);
+    const carbs = Math.max(0, 100 - protein - fat);
+
+    return { protein, fat, carbs };
+  }, [weeklyMealPlansSafe, recipesById]);
 
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark">
@@ -288,7 +356,7 @@ const WeeklyMealPlannerPage: React.FC = () => {
 
         {/* 7-Day Grid */}
         <div className="grid grid-cols-1 md:grid-cols-7 gap-4 overflow-x-auto pb-6">
-          {days.map((day, index) => (
+          {plannedDays.map((day, index) => (
             <div
               key={day.name}
               className={`flex flex-col min-w-[200px] bg-white dark:bg-slate-900 rounded-xl border shadow-sm transition-all ${
@@ -351,7 +419,7 @@ const WeeklyMealPlannerPage: React.FC = () => {
                       </button>
                     </div>
                   ) : (
-                    <div 
+                    <div
                       onClick={() => handleAddMeal(index, 'breakfast')}
                       className="group relative rounded-lg border border-dashed border-slate-300 dark:border-slate-700 p-3 hover:border-orange-500/50 transition-all cursor-pointer"
                     >
@@ -496,9 +564,9 @@ const WeeklyMealPlannerPage: React.FC = () => {
               <h3 className="font-bold dark:text-white">Macro Balance</h3>
             </div>
             <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden flex">
-              <div style={{ backgroundColor: '#f27f0d', width: '30%' }} className="h-full"></div>
-              <div style={{ backgroundColor: '#f27f0d', opacity: 0.6, width: '30%' }} className="h-full border-l border-white dark:border-slate-900"></div>
-              <div style={{ backgroundColor: '#f27f0d', opacity: 0.3, width: '40%' }} className="h-full border-l border-white dark:border-slate-900"></div>
+              <div style={{ backgroundColor: '#f27f0d', width: `${macroBalance.protein}%` }} className="h-full"></div>
+              <div style={{ backgroundColor: '#f27f0d', opacity: 0.6, width: `${macroBalance.fat}%` }} className="h-full border-l border-white dark:border-slate-900"></div>
+              <div style={{ backgroundColor: '#f27f0d', opacity: 0.3, width: `${macroBalance.carbs}%` }} className="h-full border-l border-white dark:border-slate-900"></div>
             </div>
             <div className="mt-2 flex justify-between text-[10px] text-slate-500 font-bold uppercase">
               <span>Pro</span>
@@ -529,7 +597,7 @@ const WeeklyMealPlannerPage: React.FC = () => {
           <div className="bg-white dark:bg-slate-800 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] flex flex-col">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold dark:text-white">
-                Select Recipe for {selectedDay !== null ? days[selectedDay].name : ''} - {selectedMealType}
+                Select Recipe for {selectedDay !== null ? plannedDays[selectedDay].name : ''} - {selectedMealType}
               </h3>
               <button
                 onClick={() => {

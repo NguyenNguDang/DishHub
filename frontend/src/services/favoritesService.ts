@@ -23,9 +23,9 @@ export const favoritesService = {
     addFavorite: async (recipeId: string): Promise<void> => {
         try {
             await axiosInstance.post(`/v1/recipes/${recipeId}/favorite`);
-        } catch (error) {
-            console.error('Error adding favorite:', error);
-            throw error;
+        } catch (_error) {
+            console.error('Error adding favorite:', _error);
+            throw _error;
         }
     },
 
@@ -35,9 +35,9 @@ export const favoritesService = {
     removeFavorite: async (recipeId: string): Promise<void> => {
         try {
             await axiosInstance.delete(`/v1/recipes/${recipeId}/favorite`);
-        } catch (error) {
-            console.error('Error removing favorite:', error);
-            throw error;
+        } catch (_error) {
+            console.error('Error removing favorite:', _error);
+            throw _error;
         }
     },
 
@@ -48,7 +48,7 @@ export const favoritesService = {
         try {
             const response = await axiosInstance.get(`/v1/recipes/${recipeId}/favorite`);
             return response.status === 200;
-        } catch (error) {
+        } catch {
             return false;
         }
     }
