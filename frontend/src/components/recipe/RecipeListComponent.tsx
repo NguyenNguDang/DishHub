@@ -138,7 +138,7 @@ export const RecipeListComponent: React.FC = () => {
               <div className="flex gap-2 pt-2 border-t">
                 <button
                   onClick={() => setSelectedRecipeId(recipe.id)}
-                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded text-sm font-medium transition-colors"
+                  className="flex-1 bg-[#FF6900] hover:bg-[#e55f00] text-white py-2 px-3 rounded text-sm font-medium transition-colors"
                 >
                   Xem Chi Tiết
                 </button>

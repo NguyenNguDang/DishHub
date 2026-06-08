@@ -21,6 +21,7 @@ export const AddRecipeForm: React.FC = () => {
     tags: [],
     ingredients: [],
     instructions: [],
+    isPublic: true,
   });
 
   const [newTag, setNewTag] = useState<string>('');
@@ -151,6 +152,7 @@ export const AddRecipeForm: React.FC = () => {
           tags: [],
           ingredients: [],
           instructions: [],
+          isPublic: true,
         });
       },
       onError: (err: Error) => {
@@ -165,7 +167,7 @@ export const AddRecipeForm: React.FC = () => {
 
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-800 font-semibold">Lỗi: {error instanceof Error ? error.message : 'Có lỗi xảy ra'}</p>
+          <p className="text-red-800 font-semibold">Lỗi: {error.message}</p>
         </div>
       )}
 
@@ -301,13 +303,13 @@ export const AddRecipeForm: React.FC = () => {
                 }
               }}
               placeholder="Nhập tag và nhấn Enter"
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6900]"
               disabled={isPending}
             />
             <button
               type="button"
               onClick={handleAddTag}
-              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
+              className="px-4 py-2 bg-[#FF6900] hover:bg-[#e55f00] text-white rounded-lg font-medium transition-colors"
               disabled={isPending}
             >
               Thêm
@@ -318,13 +320,13 @@ export const AddRecipeForm: React.FC = () => {
               {formData.tags.map((tag: string, index: number) => (
                 <span
                   key={index}
-                  className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center gap-2"
+                  className="bg-[#FF6900]/10 text-[#FF6900] px-3 py-1 rounded-full text-sm flex items-center gap-2"
                 >
                   {tag}
                   <button
                     type="button"
                     onClick={() => handleRemoveTag(index)}
-                    className="text-blue-600 hover:text-blue-800 font-bold"
+                    className="text-[#FF6900] hover:text-[#e55f00] font-bold"
                   >
                     ×
                   </button>
@@ -365,7 +367,7 @@ export const AddRecipeForm: React.FC = () => {
                   name: e.target.value,
                 }))
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6900]"
               disabled={isPending}
             />
             <div className="grid grid-cols-2 gap-2">
@@ -379,7 +381,7 @@ export const AddRecipeForm: React.FC = () => {
                     quantity: parseFloat(e.target.value) || 0,
                   }))
                 }
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6900]"
                 disabled={isPending}
               />
               <select
@@ -404,7 +406,7 @@ export const AddRecipeForm: React.FC = () => {
             <button
               type="button"
               onClick={handleAddIngredient}
-              className="w-full px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors"
+              className="w-full px-4 py-2 bg-[#FF6900] hover:bg-[#e55f00] text-white rounded-lg font-medium transition-colors"
               disabled={isPending}
             >
               Thêm Nguyên Liệu
@@ -447,13 +449,13 @@ export const AddRecipeForm: React.FC = () => {
                 }
               }}
               rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6900]"
               disabled={isPending}
             />
             <button
               type="button"
               onClick={handleAddInstruction}
-              className="w-full px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors"
+              className="w-full px-4 py-2 bg-[#FF6900] hover:bg-[#e55f00] text-white rounded-lg font-medium transition-colors"
               disabled={isPending}
             >
               Thêm Hướng Dẫn (Ctrl+Enter)
@@ -461,12 +463,44 @@ export const AddRecipeForm: React.FC = () => {
           </div>
         </div>
 
+        {/* Quyền riêng tư */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Quyền Riêng Tư *</label>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="radio"
+                name="isPublic"
+                checked={formData.isPublic}
+                onChange={() => setFormData((prev) => ({ ...prev, isPublic: true }))}
+                disabled={isPending}
+                className="h-4 w-4 text-[#FF6900] focus:ring-[#FF6900]"
+              />
+              Public
+            </label>
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="radio"
+                name="isPublic"
+                checked={!formData.isPublic}
+                onChange={() => setFormData((prev) => ({ ...prev, isPublic: false }))}
+                disabled={isPending}
+                className="h-4 w-4 text-[#FF6900] focus:ring-[#FF6900]"
+              />
+              Private
+            </label>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            Public: hiển thị với cộng đồng, Private: chỉ bạn xem được.
+          </p>
+        </div>
+
         {/* Submit */}
         <div className="flex gap-4 pt-6 border-t">
           <button
             type="submit"
             disabled={isPending}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-3 rounded-lg font-semibold transition-colors"
+            className="flex-1 bg-[#FF6900] hover:bg-[#e55f00] disabled:bg-[#FF6900]/40 text-white py-3 rounded-lg font-semibold transition-colors"
           >
             {isPending ? 'Đang thêm...' : 'Thêm Công Thức'}
           </button>

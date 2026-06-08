@@ -45,18 +45,8 @@ public class IngredientController {
 
     @GetMapping
     public ResponseEntity<Page<IngredientResponse>> getAll(Pageable pageable) {
-        try {
-            Page<IngredientResponse> response = ingredientService.getAll(pageable);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            // If sort parameter is invalid, use default Pageable without sort
-            pageable = org.springframework.data.domain.PageRequest.of(
-                    Math.max(pageable.getPageNumber(), 0),
-                    pageable.getPageSize() > 0 ? pageable.getPageSize() : 10
-            );
-            Page<IngredientResponse> response = ingredientService.getAll(pageable);
-            return ResponseEntity.ok(response);
-        }
+        Page<IngredientResponse> response = ingredientService.getAll(pageable);
+        return ResponseEntity.ok(response);
     }
 }
 

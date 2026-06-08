@@ -3,6 +3,7 @@ package com.nd.dishhub.service;
 import com.nd.dishhub.DTO.request.IngredientQuantityRequest;
 import com.nd.dishhub.DTO.request.RecipeRequest;
 import com.nd.dishhub.DTO.response.RecipeResponse;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
@@ -92,4 +93,8 @@ public interface RecipeService {
      * @throws IOException Nếu có lỗi khi upload
      */
     String uploadRecipeImage(MultipartFile file) throws IOException;
+    
+    Page<RecipeResponse> getMyRecipes(String emnail, Pageable pageable);
+    
+    Page<RecipeResponse> getPublicRecipesByUser(Long targetUserId, Pageable pageable);
 }

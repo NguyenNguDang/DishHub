@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -89,7 +90,7 @@ public class GlobalExceptionHandler {
     /**
      * Handle generic Exception
      */
-    @ExceptionHandler(Exception.class)
+    @ExceptionHandler({Exception.class, IOException.class})
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<Map<String, Object>> handleException(Exception ex) {
         log.error("Exception occurred: {}", ex.getMessage(), ex);
@@ -104,5 +105,6 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(response);
     }
+    
 }
 

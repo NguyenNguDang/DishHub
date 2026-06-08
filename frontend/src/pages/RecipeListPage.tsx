@@ -74,7 +74,7 @@ export const RecipeListPage = () => {
                 */}
                 <Link
                   to={routes.recipeDetail(recipe.id)}
-                  className="block w-full text-center bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition-colors"
+                  className="block w-full text-center bg-[#FF6900] text-white py-2 rounded hover:bg-[#e55f00] transition-colors"
                 >
                   Xem chi tiết
                 </Link>

@@ -31,7 +31,7 @@ export const RecipeDetailExample = () => {
 
         <button
           onClick={() => navigate(routes.recipes)}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          className="px-4 py-2 bg-[#FF6900] text-white rounded hover:bg-[#e55f00]"
         >
           ← Quay lại danh sách
         </button>

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAddRecipe, useUploadRecipeImage } from '../hooks';
-import type { CreateRecipeRequest } from '../types';
+import type { CreateRecipeRequest} from '../types';
+import {IngredientList} from "../components/recipe/IngredientList.tsx";
 
 export const AddRecipePage = () => {
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ export const AddRecipePage = () => {
     tags: [],
     ingredients: [],
     instructions: [],
+    isPublic: true,
   });
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
@@ -46,8 +48,20 @@ export const AddRecipePage = () => {
         return;
       }
 
-      console.log('Tạo công thức:', formData);
-      await addRecipe.mutateAsync(formData);
+      // Auto-upload image if selected but not yet uploaded
+      let imageUrl = formData.image;
+      if (imageFile) {
+        try {
+          imageUrl = await uploadRecipeImage.mutateAsync(imageFile);
+        } catch (uploadErr) {
+          setError('Không thể upload ảnh. Vui lòng thử lại.');
+          console.error('Error uploading image:', uploadErr);
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      await addRecipe.mutateAsync({ ...formData, image: imageUrl });
       
       setSuccessMessage('Công thức được tạo thành công!');
       setTimeout(() => {
@@ -108,11 +122,37 @@ export const AddRecipePage = () => {
     }
   };
 
-  // ✅ Handle removing selected image
+  //Handle removing selected image
   const handleRemoveImage = () => {
     setImageFile(null);
     setImagePreview('');
     setFormData({ ...formData, image: '' });
+  };
+
+  // Ingredient handlers
+  const handleAddIngredient = () => {
+    setFormData((prev) => ({
+      ...prev,
+      ingredients: [...(prev.ingredients || []), { name: '', quantity: '', unit: '', note: '' }],
+    }));
+  };
+
+  const handleRemoveIngredient = (index: number) => {
+    setFormData((prev) => {
+      const next = [...(prev.ingredients || [])];
+      next.splice(index, 1);
+      return { ...prev, ingredients: next };
+    });
+  };
+
+  const handleIngredientChange = (index: number, field: string, value: string) => {
+    setFormData((prev) => {
+      const next = [...(prev.ingredients || [])];
+      const item = { ...(next[index] || {}) };
+      item[field] = value;
+      next[index] = item;
+      return { ...prev, ingredients: next };
+    });
   };
 
   return (
@@ -220,7 +260,7 @@ export const AddRecipePage = () => {
                 type="button"
                 onClick={handleUploadImage}
                 disabled={!imageFile || isLoading || uploadRecipeImage.isPending}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-semibold transition-colors flex items-center gap-2 min-w-fit"
+                className="px-4 py-2 bg-[#FF6900] text-white rounded-lg hover:bg-[#e55f00] disabled:opacity-50 disabled:cursor-not-allowed text-sm font-semibold transition-colors flex items-center gap-2 min-w-fit"
               >
                 {uploadRecipeImage.isPending ? (
                   <>
@@ -235,23 +275,6 @@ export const AddRecipePage = () => {
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
               Định dạng: JPG, PNG, WebP | Tối đa: 10MB
             </p>
-          </div>
-
-          {/* OLD URL Input - kept as fallback */}
-          <div className="mb-6 p-3 bg-slate-100 dark:bg-slate-700 rounded-lg">
-            <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
-              Hoặc nhập URL ảnh trực tiếp
-            </label>
-            <input
-              type="url"
-              value={formData.image}
-              onChange={(e) =>
-                setFormData({ ...formData, image: e.target.value })
-              }
-              disabled={isLoading}
-              className="w-full px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50"
-              placeholder="https://example.com/recipe.jpg"
-            />
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 mb-6">
@@ -381,6 +404,47 @@ export const AddRecipePage = () => {
             </div>
           </div>
 
+          {/* Ingredients */}
+            <IngredientList
+                ingredients={formData.ingredients}
+                onChange={handleIngredientChange}
+                onRemove={handleRemoveIngredient}
+                onAdd={handleAddIngredient}
+            />
+
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
+              Quyền riêng tư *
+            </label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                <input
+                  type="radio"
+                  name="isPublic"
+                  checked={formData.isPublic}
+                  onChange={() => setFormData({ ...formData, isPublic: true })}
+                  disabled={isLoading}
+                  className="h-4 w-4 text-orange-500 focus:ring-orange-500"
+                />
+                Public
+              </label>
+              <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                <input
+                  type="radio"
+                  name="isPublic"
+                  checked={!formData.isPublic}
+                  onChange={() => setFormData({ ...formData, isPublic: false })}
+                  disabled={isLoading}
+                  className="h-4 w-4 text-orange-500 focus:ring-orange-500"
+                />
+                Private
+              </label>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+              Public: hiển thị với cộng đồng, Private: chỉ bạn xem được.
+            </p>
+          </div>
+
           <div className="flex gap-4">
             <button
               type="submit"
@@ -409,7 +473,7 @@ export const AddRecipePage = () => {
 
         <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
           <p className="text-sm text-blue-900 dark:text-blue-200">
-            💡 <strong>Mẹo:</strong> Điền đầy đủ thông tin công thức và nhấn "Tạo công thức" để thêm vào hệ thống. Sau khi tạo thành công, bạn sẽ được chuyển đến trang danh sách công thức của mình.
+            <strong>Mẹo:</strong> Điền đầy đủ thông tin công thức và nhấn "Tạo công thức" để thêm vào hệ thống. Sau khi tạo thành công, bạn sẽ được chuyển đến trang danh sách công thức của mình.
           </p>
         </div>
       </div>

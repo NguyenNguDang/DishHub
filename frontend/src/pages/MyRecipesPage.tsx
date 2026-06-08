@@ -27,8 +27,12 @@ const MyRecipesPage: React.FC = () => {
 
   const { data: favoriteRecipes = [] } = useGetFavorites('me', 0, 200);
 
-  // Fetch user recipes from API
-  const { data: userRecipes = [], isLoading, error } = useGetUserRecipes('me', 0, 100);
+  // Fetch user recipes from API - now returns full response with metadata
+  const { data: recipeResponse, isLoading, error } = useGetUserRecipes('me', 0, 100);
+  
+  const userRecipes = recipeResponse?.page?.content || [];
+  const totalReviewsCount = recipeResponse?.totalReviews || 0;
+  const averageRating = recipeResponse?.averageRating || 0;
 
   useEffect(() => {
     const nextFavorites = new Set(favoriteRecipes.map((recipe) => recipe.id));
@@ -178,20 +182,13 @@ const MyRecipesPage: React.FC = () => {
           <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Total Reviews</p>
             <p className="text-3xl font-bold text-slate-900 dark:text-white">
-              {userRecipes.reduce((sum, r) => sum + r.reviews, 0)}
+              {totalReviewsCount}
             </p>
           </div>
           <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Avg Rating</p>
             <p className="text-3xl font-bold text-orange-500">
-              {userRecipes.length > 0 ? (
-                (
-                  userRecipes.reduce((sum, r) => sum + r.rating, 0) /
-                  userRecipes.length
-                ).toFixed(1)
-              ) : (
-                '0.0'
-              )}
+              {averageRating}
             </p>
           </div>
         </div>

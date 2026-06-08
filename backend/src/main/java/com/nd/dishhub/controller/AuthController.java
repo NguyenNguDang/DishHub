@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Tag(name = "Authentication", description = "APIs for user authentication")
 public class AuthController {
-
     private final AuthService authService;
     private final UserService userService;
 

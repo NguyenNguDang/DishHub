@@ -1,12 +1,6 @@
 package com.nd.dishhub.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -76,7 +70,7 @@ public class RecipeEntity extends AbstractEntity<Long> {
     @OneToMany(mappedBy = "parent")
     private Set<RecipeEntity> variations = new HashSet<>();
     
-    @OneToMany(mappedBy = "recipe")
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<RecipeIngredientEntity> recipeIngredients = new HashSet<>();
     
     @OneToMany(mappedBy = "recipe")

@@ -18,12 +18,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "shopping_lists")
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Table(name = "shopping_lists")
 public class ShoppingListEntity extends AbstractEntity<Long> {
     
     @ManyToOne(fetch = FetchType.LAZY)

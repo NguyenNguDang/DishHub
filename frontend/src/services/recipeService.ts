@@ -18,9 +18,20 @@ export interface ReviewRequest {
   comment?: string;
 }
 
+export interface RecipePageResponse {
+  page: {
+    content: Recipe[];
+    totalElements?: number;
+    totalPages?: number;
+    number?: number;
+    size?: number;
+  };
+  totalReviews: number;
+  averageRating: number;
+}
+
 /**
  * Recipe Service - API Client cho DishHub Recipe Management
- * Sử dụng axios instance từ api.ts (đã có interceptor cho token & error handling)
  */
 export const recipeService = {
   /**
@@ -28,13 +39,11 @@ export const recipeService = {
    */
   getAll: async (page = 0, limit = 12): Promise<Recipe[]> => {
     try {
-      // Backend trả về Page object, không phải array
-      // Note: Spring Boot dùng page 0-indexed
-      const response = await axiosInstance.get<{ content: Recipe[] }>(
+      const response = await axiosInstance.get<RecipePageResponse>(
         `/v1/recipes?page=${page}&size=${limit}`
       );
 
-      return response.data.content || [];
+      return response.data.page?.content || [];
     } catch (error) {
       console.error('Error fetching recipes:', error);
       throw error;
@@ -118,9 +127,11 @@ export const recipeService = {
    */
   getByCategory: async (category: string): Promise<Recipe[]> => {
     try {
-      // Sử dụng dedicated category endpoint từ backend
-      const response = await axiosInstance.get<{ content: Recipe[] }>(`/v1/recipes/category?category=${encodeURIComponent(category)}&page=0&size=50`);
-      const allRecipes = response.data.content || [];
+      // Backend trả về RecipePageResponse
+      const response = await axiosInstance.get<RecipePageResponse>(
+        `/v1/recipes/category?category=${encodeURIComponent(category)}&page=0&size=50`
+      );
+      const allRecipes = response.data.page?.content || [];
       console.log('Category recipes:', allRecipes);
       return allRecipes;
     } catch (error) {
@@ -147,8 +158,8 @@ export const recipeService = {
       const url = `/v1/recipes/filter?${queryString}&page=0&size=50`;
       
       console.log('Filtering recipes with:', { category, maxCalories, ingredients });
-      const response = await axiosInstance.get<{ content: Recipe[] }>(url);
-      const allRecipes = response.data.content || [];
+      const response = await axiosInstance.get<RecipePageResponse>(url);
+      const allRecipes = response.data.page?.content || [];
       console.log('Filtered recipes:', allRecipes);
       return allRecipes;
     } catch (error) {
@@ -192,22 +203,21 @@ export const recipeService = {
     }
   },
 
-  /**
-   * Lấy danh sách công thức của user hiện tại
-   */
-  getUserRecipes: async (userId: string = 'me', page = 0, limit = 12): Promise<Recipe[]> => {
-    try {
-      // Backend trả về Page object, không phải array
-      const response = await axiosInstance.get<{ content: Recipe[] }>(
-        `/v1/recipes?userId=${userId}&page=${page}&size=${limit}`
-      );
+   /**
+    * Lấy danh sách công thức của user hiện tại
+    */
+   getUserRecipes: async (userId: string = 'me', page = 0, limit = 12): Promise<RecipePageResponse> => {
+     try {
+       const response = await axiosInstance.get<RecipePageResponse>(
+         `/v1/recipes?userId=${userId}&page=${page}&size=${limit}`
+       );
 
-      return response.data.content || [];
-    } catch (error) {
-      console.error('Error fetching user recipes:', error);
-      throw error;
-    }
-  },
+       return response.data;
+     } catch (error) {
+       console.error('Error fetching user recipes:', error);
+       throw error;
+     }
+   },
 
   /**
    * Upload hình ảnh công thức

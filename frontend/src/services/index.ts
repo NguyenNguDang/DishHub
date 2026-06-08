@@ -1,5 +1,5 @@
 export { apiClient } from './api';
-export { recipeService, type Review, type ReviewRequest } from './recipeService';
+export { recipeService, type Review, type ReviewRequest, type RecipePageResponse } from './recipeService';
 export { authService } from './authService';
 export { favoritesService } from './favoritesService';
 export { shoppingListService } from './shoppingListService';

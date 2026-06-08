@@ -26,7 +26,7 @@ interface Day {
 
 const WeeklyMealPlannerPage: React.FC = () => {
   // API hooks
-  const { data: recipesData } = useGetRecipes();
+  const { data: recipesData, isLoading: isLoadingRecipes } = useGetRecipes();
   const recipes = useMemo(() => recipesData || [], [recipesData]);
   const recipesById = useMemo(() => {
     return new Map(recipes.map((recipe) => [String(recipe.id), recipe]));
@@ -359,7 +359,9 @@ const WeeklyMealPlannerPage: React.FC = () => {
           {plannedDays.map((day, index) => (
             <div
               key={day.name}
-              className={`flex flex-col min-w-[200px] bg-white dark:bg-slate-900 rounded-xl border shadow-sm transition-all ${
+              // Keep a min width on small screens to allow horizontal scrolling,
+              // but remove it on md+ so the 7-column grid can size columns evenly.
+              className={`flex flex-col min-w-[200px] md:min-w-0 bg-white dark:bg-slate-900 rounded-xl border shadow-sm transition-all ${
                 day.isHighlight
                   ? 'border-orange-500/40 ring-2 ring-orange-500/20'
                   : 'border-slate-200 dark:border-slate-800'
