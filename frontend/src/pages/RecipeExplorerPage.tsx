@@ -27,7 +27,7 @@ const RecipeExplorerPage: React.FC = () => {
   const addFavoriteMutation = useAddFavorite();
   const removeFavoriteMutation = useRemoveFavorite();
 
-  const { data: favoriteRecipes = [] } = useGetFavorites('me', 0, 200);
+  const { data: favoriteRecipes } = useGetFavorites('me', 0, 200);
 
   const categories = ['All', 'Breakfast', 'Vegan', 'Quick & Easy', 'Gluten-Free', 'Desserts'];
 
@@ -41,6 +41,9 @@ const RecipeExplorerPage: React.FC = () => {
   }, [filters.search]);
 
   useEffect(() => {
+    if (!favoriteRecipes) {
+      return;
+    }
     const nextFavorites = new Set(favoriteRecipes.map((recipe) => recipe.id));
     setFavorites(nextFavorites);
   }, [favoriteRecipes]);
@@ -54,14 +57,14 @@ const RecipeExplorerPage: React.FC = () => {
     queryFn: async () => {
       try {
         if (debouncedSearch) {
-          console.log('🔍 Calling search API:', debouncedSearch);
+          console.log('Calling search API:', debouncedSearch);
           return await recipeService.search(debouncedSearch);
         } else if (
           filters.category !== 'All' ||
           filters.maxCalories < 1500 ||
           (filters.ingredients && filters.ingredients.trim())
         ) {
-          console.log('📂 Filtering recipes:', { 
+          console.log('Filtering recipes:', {
             category: filters.category, 
             maxCalories: filters.maxCalories,
             ingredients: filters.ingredients 
@@ -72,11 +75,11 @@ const RecipeExplorerPage: React.FC = () => {
             filters.ingredients
           );
         } else {
-          console.log('📋 Fetching all recipes');
           return await recipeService.getAll();
+
         }
       } catch (error) {
-        console.error('❌ Error in queryFn:', error);
+        console.error('Error in queryFn:', error);
         throw error;
       }
     },

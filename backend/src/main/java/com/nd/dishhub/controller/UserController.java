@@ -22,7 +22,6 @@ import java.util.Map;
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 public class UserController {
-    
     private final UserService userService;
     private final FavoriteService favoriteService;
     
@@ -40,17 +39,8 @@ public class UserController {
     
     @GetMapping
     public ResponseEntity<Page<UserResponse>> getAll(Pageable pageable) {
-        try {
-            Page<UserResponse> response = userService.getAll(pageable);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            pageable = org.springframework.data.domain.PageRequest.of(
-                    Math.max(pageable.getPageNumber(), 0),
-                    pageable.getPageSize() > 0 ? pageable.getPageSize() : 10
-            );
-            Page<UserResponse> response = userService.getAll(pageable);
-            return ResponseEntity.ok(response);
-        }
+        Page<UserResponse> response = userService.getAll(pageable);
+        return ResponseEntity.ok(response);
     }
     
     @PutMapping("/{id}")

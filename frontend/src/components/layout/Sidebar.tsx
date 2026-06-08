@@ -1,6 +1,16 @@
 import { useLocation } from 'react-router-dom';
-import { NavLink } from '../common/NavLink';
+import { NavLink } from '../common';
 import type { NavItem } from '../../types';
+import { IoMdSearch } from "react-icons/io";
+import { FaHeart } from "react-icons/fa";
+import { TiShoppingCart } from "react-icons/ti";
+import { TbCalendarWeek } from "react-icons/tb";
+import { PiBowlFoodDuotone } from "react-icons/pi";
+import { IoFastFood } from "react-icons/io5";
+import { MdOutlineEmojiFoodBeverage } from "react-icons/md";
+import { GiFruitBowl } from "react-icons/gi";
+import { CgProfile } from "react-icons/cg";
+import { IoSettings } from "react-icons/io5";
 
 interface SidebarProps {
   isLoggedIn: boolean;
@@ -10,17 +20,17 @@ export const Sidebar = ({ isLoggedIn }: SidebarProps) => {
   const location = useLocation();
 
   const mainNavItems: NavItem[] = [
-    { label: 'Khám phá', path: '/recipes', icon: '🔍' },
-    { label: 'Công thức của tôi', path: '/my-recipes', icon: '❤️' },
-    { label: 'Danh sách mua', path: '/shopping-list', icon: '🛒', badge: 3 },
-    { label: 'Lên kế hoạch bữa', path: '/meal-planner', icon: '📅' },
+    { label: 'Khám phá', path: '/recipes', icon: <IoMdSearch /> },
+    { label: 'Công thức của tôi', path: '/my-recipes', icon: <FaHeart /> },
+    { label: 'Danh sách mua', path: '/shopping-list', icon: <TiShoppingCart />, badge: 0 },
+    { label: 'Lên kế hoạch bữa', path: '/meal-planner', icon: <TbCalendarWeek /> },
   ];
 
   const categoryItems: NavItem[] = [
-    { label: 'Các món ăn Việt', path: '/recipes?category=vietnamese', icon: '🍜' },
-    { label: 'Ăn chay', path: '/recipes?category=vegetarian', icon: '🥗' },
-    { label: 'Nước ngoài', path: '/recipes?category=international', icon: '🌍' },
-    { label: 'Tráng miệng', path: '/recipes?category=dessert', icon: '🍰' },
+    { label: 'Các món ăn Việt', path: '/recipes?category=vietnamese', icon: <PiBowlFoodDuotone /> },
+    { label: 'Ăn chay', path: '/recipes?category=vegetarian', icon: <GiFruitBowl /> },
+    { label: 'Nước ngoài', path: '/recipes?category=international', icon: <IoFastFood /> },
+    { label: 'Tráng miệng', path: '/recipes?category=dessert', icon: <MdOutlineEmojiFoodBeverage />},
   ];
 
   return (
@@ -72,13 +82,13 @@ export const Sidebar = ({ isLoggedIn }: SidebarProps) => {
             <NavLink
               to="/profile"
               label="Hồ sơ"
-              icon="👤"
+              icon= {<CgProfile />}
               isActive={location.pathname === '/profile'}
             />
             <NavLink
               to="/settings"
               label="Cài đặt"
-              icon="⚙️"
+              icon={<IoSettings />}
               isActive={location.pathname === '/settings'}
             />
           </div>

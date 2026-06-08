@@ -46,5 +46,10 @@ public class RecipeResponse {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
-}
 
+     private List<RecipeIngredientResponse> ingredients;
+     
+     private int totalReviews;
+     
+     private Double averageRating;
+}

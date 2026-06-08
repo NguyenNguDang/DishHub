@@ -4,6 +4,7 @@ import com.nd.dishhub.DTO.request.IngredientQuantityRequest;
 import com.nd.dishhub.DTO.request.RecipeRequest;
 import com.nd.dishhub.DTO.request.ReviewRequest;
 import com.nd.dishhub.DTO.response.RecipeResponse;
+import com.nd.dishhub.DTO.response.RecipePageResponse;
 import com.nd.dishhub.DTO.response.ReviewResponse;
 import com.nd.dishhub.exception.UnauthorizedException;
 import com.nd.dishhub.model.UserEntity;
@@ -30,8 +31,8 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/recipes")
 @RequiredArgsConstructor
+@RequestMapping("/api/v1/recipes")
 public class RecipeController {
     private final RecipeService recipeService;
     private final RecipeSearchService recipeSearchService;
@@ -39,24 +40,40 @@ public class RecipeController {
     private final UserRepository userRepository;
     private final FavoriteService favoriteService;
     
+    private UserEntity getAuthenticatedUser(Principal principal) {
+        if(principal == null) {
+            throw new UnauthorizedException("You must be authenticated to perform this action");
+        }
+        return userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new UnauthorizedException("Authenticated user not found"));
+    }
+    
     @PostMapping
     public ResponseEntity<RecipeResponse> create(@Valid @RequestBody RecipeRequest request, Principal principal) {
-        // Get userId from authenticated user
-        UserEntity user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
-        RecipeResponse response = recipeService.create(request, user.getId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        UserEntity user = getAuthenticatedUser(principal);
+        return ResponseEntity.status(HttpStatus.CREATED).body(recipeService.create(request, user.getId()));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<RecipeResponse> update(@PathVariable Long id, 
-                                                  @Valid @RequestBody RecipeRequest request) {
-        RecipeResponse response = recipeService.update(id, request);
-        return ResponseEntity.ok(response);
+                                                 @Valid @RequestBody RecipeRequest request,
+                                                 Principal principal) {
+        UserEntity user = getAuthenticatedUser(principal);
+        RecipeResponse recipe = recipeService.getById(id);
+        if(!recipe.getUserId().equals(user.getId())) {
+            throw new UnauthorizedException("You don't have permission to update this recipe");
+        }
+        return ResponseEntity.ok(recipeService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable Long id,
+                                       Principal principal) {
+        UserEntity user = getAuthenticatedUser(principal);
+        RecipeResponse recipe = recipeService.getById(id);
+        if (!recipe.getUserId().equals(user.getId())) {
+            throw new UnauthorizedException("You don't have permission to delete this recipe");
+        }
         recipeService.delete(id);
         return ResponseEntity.noContent().build();
     }
@@ -79,57 +96,72 @@ public class RecipeController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<RecipeResponse>> getAll(
+    public ResponseEntity<RecipePageResponse> getAll(
             @RequestParam(required = false) String userId,
-            Pageable pageable,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "20") Integer size,
             Principal principal) {
-        try {
-            // If userId=me, get current authenticated user's recipes
-            if ("me".equals(userId)) {
-                UserEntity user = userRepository.findByEmail(principal.getName())
-                        .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
-                Page<RecipeResponse> response = recipeService.getRecipesByUser(user.getId(), pageable);
-                return ResponseEntity.ok(response);
-            }
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<RecipeResponse> recipes;
+        
+        //Get my recipes
+       if("me".equals(userId)) {
+           if(principal == null){
+               throw new UnauthorizedException("You don't have permission to access this recipe");
+           }
+           recipes = recipeService.getMyRecipes(principal.getName(), pageable);
+       }
+       else if(userId != null) {
+           //Get public recipes of user
+           Long targetUserId = Long.parseLong(userId);
+           recipes = recipeService.getPublicRecipesByUser(targetUserId, pageable);
+       }
+       else {
+           //Default: get all public recipes
+           recipes = recipeService.getPublicRecipes(pageable);
+       }
+       
+       // Calculate summary stats
+       int totalReviews = recipes.getContent().stream()
+           .mapToInt(RecipeResponse::getTotalReviews)
+           .sum();
+       
+       Double averageRating = recipes.getContent().stream()
+           .mapToDouble(r -> r.getAverageRating() != null ? r.getAverageRating() : 0)
+           .average()
+           .orElse(0);
+       
+       RecipePageResponse response = RecipePageResponse.builder()
+           .page(recipes)
+           .totalReviews(totalReviews)
+           .averageRating(Math.round(averageRating * 10.0) / 10.0)
+           .build();
+       
+       return ResponseEntity.ok(response);
 
-            // If userId is specified and is numeric, get that user's recipes
-            if (userId != null) {
-                try {
-                    Long userIdLong = Long.parseLong(userId);
-                    Page<RecipeResponse> response = recipeService.getRecipesByUser(userIdLong, pageable);
-                    return ResponseEntity.ok(response);
-                } catch (NumberFormatException e) {
-                    throw new IllegalArgumentException("Invalid userId format");
-                }
-            }
-
-            // Otherwise, get all recipes
-            Page<RecipeResponse> response = recipeService.getAll(pageable);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            // If sort parameter is invalid, use default Pageable without sort
-            pageable = PageRequest.of(
-                    Math.max(pageable.getPageNumber(), 0),
-                    pageable.getPageSize() > 0 ? pageable.getPageSize() : 10
-            );
-            Page<RecipeResponse> response = recipeService.getAll(pageable);
-            return ResponseEntity.ok(response);
-        }
     }
 
     @GetMapping("/public")
-    public ResponseEntity<Page<RecipeResponse>> getPublicRecipes(Pageable pageable) {
-        try {
-            Page<RecipeResponse> response = recipeService.getPublicRecipes(pageable);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            pageable = PageRequest.of(
-                    Math.max(pageable.getPageNumber(), 0),
-                    pageable.getPageSize() > 0 ? pageable.getPageSize() : 10
-            );
-            Page<RecipeResponse> response = recipeService.getPublicRecipes(pageable);
-            return ResponseEntity.ok(response);
-        }
+    public ResponseEntity<RecipePageResponse> getPublicRecipes(@PageableDefault(size = 10) Pageable pageable) {
+        Page<RecipeResponse> recipes = recipeService.getPublicRecipes(pageable);
+        
+        int totalReviews = recipes.getContent().stream()
+            .mapToInt(RecipeResponse::getTotalReviews)
+            .sum();
+        
+        Double averageRating = recipes.getContent().stream()
+            .mapToDouble(r -> r.getAverageRating() != null ? r.getAverageRating() : 0)
+            .average()
+            .orElse(0);
+        
+        RecipePageResponse response = RecipePageResponse.builder()
+            .page(recipes)
+            .totalReviews(totalReviews)
+            .averageRating(Math.round(averageRating * 10.0) / 10.0)
+            .build();
+        
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/search")
@@ -144,36 +176,75 @@ public class RecipeController {
     }
 
     @GetMapping("/category")
-    public ResponseEntity<Page<RecipeResponse>> getRecipesByCategory(
+    public ResponseEntity<RecipePageResponse> getRecipesByCategory(
             @RequestParam String category,
             Pageable pageable) {
-        Page<RecipeResponse> response = recipeService.getRecipesByCategory(category, pageable);
+        Page<RecipeResponse> recipes = recipeService.getRecipesByCategory(category, pageable);
+        
+        int totalReviews = recipes.getContent().stream()
+            .mapToInt(RecipeResponse::getTotalReviews)
+            .sum();
+        
+        Double averageRating = recipes.getContent().stream()
+            .mapToDouble(r -> r.getAverageRating() != null ? r.getAverageRating() : 0)
+            .average()
+            .orElse(0);
+        
+        RecipePageResponse response = RecipePageResponse.builder()
+            .page(recipes)
+            .totalReviews(totalReviews)
+            .averageRating(Math.round(averageRating * 10.0) / 10.0)
+            .build();
+        
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/filter")
-    public ResponseEntity<Page<RecipeResponse>> filterRecipes(
+    public ResponseEntity<RecipePageResponse> filterRecipes(
             @RequestParam(required = false) String category,
             @RequestParam(required = false) Integer maxCalories,
             @RequestParam(required = false) String ingredients,
             Pageable pageable) {
-        Page<RecipeResponse> response = recipeService.filterRecipes(category, maxCalories, ingredients, pageable);
+        Page<RecipeResponse> recipes = recipeService.filterRecipes(category, maxCalories, ingredients, pageable);
+        
+        int totalReviews = recipes.getContent().stream()
+            .mapToInt(RecipeResponse::getTotalReviews)
+            .sum();
+        
+        Double averageRating = recipes.getContent().stream()
+            .mapToDouble(r -> r.getAverageRating() != null ? r.getAverageRating() : 0)
+            .average()
+            .orElse(0);
+        
+        RecipePageResponse response = RecipePageResponse.builder()
+            .page(recipes)
+            .totalReviews(totalReviews)
+            .averageRating(Math.round(averageRating * 10.0) / 10.0)
+            .build();
+        
         return ResponseEntity.ok(response);
     }
-
+    
     @GetMapping("/user/{userId}")
-    public ResponseEntity<Page<RecipeResponse>> getRecipesByUser(@PathVariable Long userId, Pageable pageable) {
-        try {
-            Page<RecipeResponse> response = recipeService.getRecipesByUser(userId, pageable);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            pageable = PageRequest.of(
-                    Math.max(pageable.getPageNumber(), 0),
-                    pageable.getPageSize() > 0 ? pageable.getPageSize() : 10
-            );
-            Page<RecipeResponse> response = recipeService.getRecipesByUser(userId, pageable);
-            return ResponseEntity.ok(response);
-        }
+    public ResponseEntity<RecipePageResponse> getRecipesByUser(@PathVariable Long userId, @PageableDefault(size = 10) Pageable pageable) {
+        Page<RecipeResponse> recipes = recipeService.getPublicRecipesByUser(userId, pageable);
+        
+        int totalReviews = recipes.getContent().stream()
+            .mapToInt(RecipeResponse::getTotalReviews)
+            .sum();
+        
+        Double averageRating = recipes.getContent().stream()
+            .mapToDouble(r -> r.getAverageRating() != null ? r.getAverageRating() : 0)
+            .average()
+            .orElse(0);
+        
+        RecipePageResponse response = RecipePageResponse.builder()
+            .page(recipes)
+            .totalReviews(totalReviews)
+            .averageRating(Math.round(averageRating * 10.0) / 10.0)
+            .build();
+        
+        return ResponseEntity.ok(response);
     }
 
     // ==================== CUSTOM RECIPE ENDPOINTS ====================
@@ -204,43 +275,35 @@ public class RecipeController {
         RecipeResponse response = recipeService.updateRecipeIngredients(id, newIngredients);
         return ResponseEntity.ok(response);
     }
-
+    
     @GetMapping("/me/custom")
-    public ResponseEntity<Page<RecipeResponse>> getMyCustomRecipes(Pageable pageable, Principal principal) {
-        // Get userId from authenticated user
-        UserEntity user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
-
-        try {
-            Page<RecipeResponse> response = recipeService.getMyCustomRecipes(user.getId(), pageable);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            pageable = PageRequest.of(
-                    Math.max(pageable.getPageNumber(), 0),
-                    pageable.getPageSize() > 0 ? pageable.getPageSize() : 10
-            );
-            Page<RecipeResponse> response = recipeService.getMyCustomRecipes(user.getId(), pageable);
-            return ResponseEntity.ok(response);
-        }
+    public ResponseEntity<RecipePageResponse> getMyCustomRecipes(@PageableDefault(size = 10) Pageable pageable, Principal principal) {
+        UserEntity user = getAuthenticatedUser(principal);
+        Page<RecipeResponse> recipes = recipeService.getMyCustomRecipes(user.getId(), pageable);
+        
+        int totalReviews = recipes.getContent().stream()
+            .mapToInt(RecipeResponse::getTotalReviews)
+            .sum();
+        
+        Double averageRating = recipes.getContent().stream()
+            .mapToDouble(r -> r.getAverageRating() != null ? r.getAverageRating() : 0)
+            .average()
+            .orElse(0);
+        
+        RecipePageResponse response = RecipePageResponse.builder()
+            .page(recipes)
+            .totalReviews(totalReviews)
+            .averageRating(Math.round(averageRating * 10.0) / 10.0)
+            .build();
+        
+        return ResponseEntity.ok(response);
     }
 
     // ==================== REVIEW ENDPOINTS ====================
-
+    
     @GetMapping("/{id}/reviews")
-    public ResponseEntity<Page<ReviewResponse>> getRecipeReviews(
-            @PathVariable Long id,
-            Pageable pageable) {
-        try {
-            Page<ReviewResponse> response = reviewService.getRecipeReviews(id, pageable);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            pageable = PageRequest.of(
-                    Math.max(pageable.getPageNumber(), 0),
-                    pageable.getPageSize() > 0 ? pageable.getPageSize() : 10
-            );
-            Page<ReviewResponse> response = reviewService.getRecipeReviews(id, pageable);
-            return ResponseEntity.ok(response);
-        }
+    public ResponseEntity<Page<ReviewResponse>> getRecipeReviews(@PathVariable Long id, @PageableDefault(size = 10) Pageable pageable) {
+        return ResponseEntity.ok(reviewService.getRecipeReviews(id, pageable));
     }
 
     @PostMapping("/{id}/reviews")
@@ -248,10 +311,7 @@ public class RecipeController {
             @PathVariable Long id,
             @Valid @RequestBody ReviewRequest request,
             Principal principal) {
-        // Get userId from authenticated user
-        UserEntity user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
-        
+        UserEntity user = getAuthenticatedUser(principal);
         ReviewResponse response = reviewService.createReview(id, request, user.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -260,20 +320,13 @@ public class RecipeController {
 
     @PostMapping("/upload-image")
     public ResponseEntity<Map<String, String>> uploadRecipeImage(
-            @RequestParam("file") MultipartFile file) {
+            @RequestParam("file") MultipartFile file) throws IOException {
         if (file.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "File is empty"));
+            throw new IllegalArgumentException("File is empty");
         }
-
-        try {
-            String imageUrl = recipeService.uploadRecipeImage(file);
-            Map<String, String> response = new HashMap<>();
-            response.put("url", imageUrl);
-            return ResponseEntity.ok(response);
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Failed to upload image: " + e.getMessage()));
-        }
+        
+        String imageUrl = recipeService.uploadRecipeImage(file);
+        return ResponseEntity.ok(Map.of("url", imageUrl));
     }
 
     // ==================== FAVORITE ENDPOINTS ====================
@@ -283,20 +336,9 @@ public class RecipeController {
             @PathVariable Long id,
             Principal principal
     ) {
-        try {
-            UserEntity user = userRepository.findByEmail(principal.getName())
-                    .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
-            favoriteService.addFavorite(user.getId(), id);
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(Map.of("message", "Recipe added to favorites"));
-        } catch (RuntimeException e) {
-            if (e.getMessage().contains("already favorited")) {
-                return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(Map.of("error", e.getMessage()));
-            }
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", e.getMessage()));
-        }
+       UserEntity user = getAuthenticatedUser(principal);
+        favoriteService.addFavorite(user.getId(), id);
+        return ResponseEntity.ok(Map.of("message", "Recipe added to favorites"));
     }
 
     @DeleteMapping("/{id}/favorite")
@@ -304,15 +346,10 @@ public class RecipeController {
             @PathVariable Long id,
             Principal principal
     ) {
-        try {
-            UserEntity user = userRepository.findByEmail(principal.getName())
-                    .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
-            favoriteService.removeFavorite(user.getId(), id);
-            return ResponseEntity.ok(Map.of("message", "Recipe removed from favorites"));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", e.getMessage()));
-        }
+        UserEntity user = getAuthenticatedUser(principal);
+        favoriteService.removeFavorite(user.getId(), id);
+        
+        return ResponseEntity.ok(Map.of("message", "Recipe removed from favorites"));
     }
 
     @GetMapping("/{id}/favorite")
@@ -320,9 +357,9 @@ public class RecipeController {
             @PathVariable Long id,
             Principal principal
     ) {
-        UserEntity user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+        UserEntity user = getAuthenticatedUser(principal);
         boolean isFav = favoriteService.isFavorite(user.getId(), id);
+        
         return ResponseEntity.ok(Map.of("isFavorite", isFav));
     }
 }

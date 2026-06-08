@@ -2,6 +2,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import type { UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
 import type { Recipe, CreateRecipeRequest, UpdateRecipeRequest } from '../types';
 import { recipeService } from '../services';
+import type { RecipePageResponse } from '../services';
 import { queryClient } from '../config/queryClient';
 
 /**
@@ -82,7 +83,7 @@ export const useGetUserRecipes = (
   userId: string = 'me',
   page: number = 0,
   limit: number = 12,
-  options?: UseQueryOptions<Recipe[], Error>
+  options?: UseQueryOptions<RecipePageResponse, Error>
 ) => {
   return useQuery({
     queryKey: ['recipes', 'user', userId, page],

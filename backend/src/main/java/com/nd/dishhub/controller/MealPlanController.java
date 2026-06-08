@@ -2,6 +2,7 @@ package com.nd.dishhub.controller;
 
 import com.nd.dishhub.DTO.request.CreateMealPlanRequest;
 import com.nd.dishhub.DTO.response.MealPlanResponse;
+import com.nd.dishhub.exception.UnauthorizedException;
 import com.nd.dishhub.model.UserEntity;
 import com.nd.dishhub.repository.UserRepository;
 import com.nd.dishhub.service.MealPlanService;
@@ -29,17 +30,20 @@ public class MealPlanController {
 
     private final MealPlanService mealPlanService;
     private final UserRepository userRepository;
-
-    /**
-     * Create a new meal plan
-     * POST /api/v1/meal-plans
-     */
+    
+    private UserEntity getAuthenticatedUser(Principal principal) {
+        if(principal == null) {
+            throw new UnauthorizedException("You must be authenticated to perform this action");
+        }
+        return userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new UnauthorizedException("Authenticated user not found"));
+    }
+    
     @PostMapping
     public ResponseEntity<MealPlanResponse> createMealPlan(
             @Valid @RequestBody CreateMealPlanRequest request,
             Principal principal) {
-        UserEntity user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+        UserEntity user = getAuthenticatedUser(principal);
 
         MealPlanResponse response = mealPlanService.create(user.getId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -61,8 +65,7 @@ public class MealPlanController {
      */
     @GetMapping
     public ResponseEntity<List<MealPlanResponse>> getAllMealPlans(Principal principal) {
-        UserEntity user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+        UserEntity user = getAuthenticatedUser(principal);
 
         List<MealPlanResponse> response = mealPlanService.getAllByUserId(user.getId());
         return ResponseEntity.ok(response);
@@ -76,8 +79,7 @@ public class MealPlanController {
     public ResponseEntity<List<MealPlanResponse>> getMealPlansByDate(
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             Principal principal) {
-        UserEntity user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+        UserEntity user = getAuthenticatedUser(principal);
 
         List<MealPlanResponse> response = mealPlanService.getMealPlansByDate(user.getId(), date);
         return ResponseEntity.ok(response);
@@ -91,8 +93,7 @@ public class MealPlanController {
     public ResponseEntity<List<MealPlanResponse>> getWeeklyMealPlans(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             Principal principal) {
-        UserEntity user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+        UserEntity user = getAuthenticatedUser(principal);
 
         // If no date provided, use current date
         LocalDate referenceDate = (date != null) ? date : LocalDate.now();
@@ -116,8 +117,7 @@ public class MealPlanController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             Principal principal) {
-        UserEntity user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+        UserEntity user = getAuthenticatedUser(principal);
 
         List<MealPlanResponse> response = mealPlanService.getMealPlansByDateRange(
                 user.getId(), startDate, endDate);
@@ -132,8 +132,7 @@ public class MealPlanController {
     public ResponseEntity<List<MealPlanResponse>> getMealPlansByMealType(
             @PathVariable String mealType,
             Principal principal) {
-        UserEntity user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+        UserEntity user = getAuthenticatedUser(principal);
 
         List<MealPlanResponse> response = mealPlanService.getMealPlansByMealType(user.getId(), mealType);
         return ResponseEntity.ok(response);
@@ -148,9 +147,7 @@ public class MealPlanController {
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @PathVariable String mealType,
             Principal principal) {
-        UserEntity user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
-
+        UserEntity user = getAuthenticatedUser(principal);
         MealPlanResponse response = mealPlanService.getMealPlanByDayAndMealType(user.getId(), date, mealType);
         return ResponseEntity.ok(response);
     }
@@ -161,8 +158,7 @@ public class MealPlanController {
      */
     @GetMapping("/upcoming")
     public ResponseEntity<List<MealPlanResponse>> getUpcomingMealPlans(Principal principal) {
-        UserEntity user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+        UserEntity user = getAuthenticatedUser(principal);
 
         List<MealPlanResponse> response = mealPlanService.getUpcomingMealPlans(user.getId());
         return ResponseEntity.ok(response);
@@ -174,8 +170,7 @@ public class MealPlanController {
      */
     @GetMapping("/past")
     public ResponseEntity<List<MealPlanResponse>> getPastMealPlans(Principal principal) {
-        UserEntity user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+        UserEntity user = getAuthenticatedUser(principal);
 
         List<MealPlanResponse> response = mealPlanService.getPastMealPlans(user.getId());
         return ResponseEntity.ok(response);
@@ -190,8 +185,7 @@ public class MealPlanController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             Principal principal) {
-        UserEntity user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+        UserEntity user = getAuthenticatedUser(principal);
 
         Pageable pageable = PageRequest.of(page, size);
         Page<MealPlanResponse> response = mealPlanService.getMealPlansWithPagination(user.getId(), pageable);
@@ -217,8 +211,7 @@ public class MealPlanController {
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @PathVariable String mealType,
             Principal principal) {
-        UserEntity user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+        UserEntity user = getAuthenticatedUser(principal);
 
         mealPlanService.deleteMealPlan(user.getId(), date, mealType);
         return ResponseEntity.ok(Map.of("message", "Meal plan deleted successfully"));

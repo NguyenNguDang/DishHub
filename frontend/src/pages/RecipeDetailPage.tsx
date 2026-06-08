@@ -1,58 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { recipeService, type Review, type ReviewRequest } from '../services';
-import { favoritesService } from '../services';
-import { useAddFavorite, useRemoveFavorite } from '../hooks';
 
 const RecipeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [checkedIngredients, setCheckedIngredients] = useState<Set<string>>(new Set());
   const [reviewText, setReviewText] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [isCheckingFavorite, setIsCheckingFavorite] = useState(true);
-  
-  const addFavoriteMutation = useAddFavorite();
-  const removeFavoriteMutation = useRemoveFavorite();
 
   // Fetch recipe detail
   const { data: recipe, isLoading, error } = useQuery({
     queryKey: ['recipe', id],
     queryFn: async () => {
       if (!id) throw new Error('Recipe ID not found');
-      console.log('📥 Fetching recipe:', id);
+      console.log('Fetching recipe:', id);
       return await recipeService.getById(id);
     },
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
   });
-
-  // Check nếu recipe đã favorite
-  useEffect(() => {
-    const checkFavorite = async () => {
-      if (!id) return;
-      try {
-        setIsCheckingFavorite(true);
-        const fav = await favoritesService.isFavorite(id);
-        setIsFavorite(fav);
-      } catch (error) {
-        console.error('Error checking favorite:', error);
-      } finally {
-        setIsCheckingFavorite(false);
-      }
-    };
-    checkFavorite();
-  }, [id]);
+  console.log('Recipe data:', recipe);
 
   // Fetch reviews
   const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
     queryKey: ['reviews', id],
     queryFn: async () => {
       if (!id) throw new Error('Recipe ID not found');
-      console.log('📥 Fetching reviews for recipe:', id);
+      console.log('Fetching reviews for recipe:', id);
       return await recipeService.getRecipeReviews(id);
     },
     enabled: !!id,
@@ -69,11 +45,11 @@ const RecipeDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['reviews', id] });
       setReviewText('');
       setReviewRating(5);
-      alert('✅ Review submitted successfully!');
+      alert('Review submitted successfully!');
     },
     onError: (error) => {
       console.error('Error creating review:', error);
-      alert('❌ Failed to submit review. ' + (error instanceof Error ? error.message : ''));
+      alert('Failed to submit review. ' + (error instanceof Error ? error.message : ''));
     },
   });
 
@@ -89,22 +65,32 @@ const RecipeDetailPage: React.FC = () => {
     });
   };
 
-  // Toggle favorite
-  const handleToggleFavorite = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (!id) return;
-
-    try {
-      if (isFavorite) {
-        await removeFavoriteMutation.mutateAsync(id);
-        setIsFavorite(false);
-      } else {
-        await addFavoriteMutation.mutateAsync(id);
-        setIsFavorite(true);
-      }
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
+  const toggleIngredient = (ingredientId: string) => {
+    const newChecked = new Set(checkedIngredients);
+    if (newChecked.has(ingredientId)) {
+      newChecked.delete(ingredientId);
+    } else {
+      newChecked.add(ingredientId);
     }
+    setCheckedIngredients(newChecked);
+  };
+
+  const renderStars = (rating: number, size: string = 'text-lg') => {
+    return (
+      <div className={`flex text-orange-500 ${size}`}>
+        {[1, 2, 3, 4, 5].map(i => (
+          <span
+            key={i}
+            className="material-symbols-outlined"
+            style={{
+              fill: i <= Math.floor(rating) ? '1' : i <= rating ? '0.5' : '0',
+            }}
+          >
+            star
+          </span>
+        ))}
+      </div>
+    );
   };
 
   if (!id) {
@@ -150,75 +136,10 @@ const RecipeDetailPage: React.FC = () => {
     );
   }
 
-  const toggleIngredient = (ingredientId: string) => {
-    const newChecked = new Set(checkedIngredients);
-    if (newChecked.has(ingredientId)) {
-      newChecked.delete(ingredientId);
-    } else {
-      newChecked.add(ingredientId);
-    }
-    setCheckedIngredients(newChecked);
-  };
-
-  const renderStars = (rating: number, size: string = 'text-lg') => {
-    return (
-      <div className={`flex text-orange-500 ${size}`}>
-        {[1, 2, 3, 4, 5].map(i => (
-          <span
-            key={i}
-            className="material-symbols-outlined"
-            style={{
-              fill: i <= Math.floor(rating) ? '1' : i <= rating ? '0.5' : '0',
-            }}
-          >
-            star
-          </span>
-        ))}
-      </div>
-    );
-  };
-
-
   return (
     <div className="relative flex min-h-screen flex-col bg-background-light dark:bg-background-dark">
-      {/* Navigation Bar */}
-      <header className="sticky top-0 z-50 w-full border-b border-orange-500/10 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate('/recipes')}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors"
-              title="Go back"
-            >
-              <span className="material-symbols-outlined text-slate-600 dark:text-slate-300">arrow_back</span>
-            </button>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500 text-white">
-              <span className="material-symbols-outlined text-xl">restaurant</span>
-            </div>
-            <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">DishHub</h1>
-          </div>
-           <div className="flex items-center gap-4">
-             <button 
-               onClick={handleToggleFavorite}
-               disabled={isCheckingFavorite || addFavoriteMutation.isPending || removeFavoriteMutation.isPending}
-               className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-colors disabled:opacity-50"
-               title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-             >
-               <span className={`material-symbols-outlined ${isFavorite ? 'text-red-500' : ''}`} style={{ fill: isFavorite ? '1' : '0' }}>
-                 favorite
-               </span>
-             </button>
-             <button className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-colors">
-               <span className="material-symbols-outlined">share</span>
-             </button>
-             <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-orange-500/20">
-               <img alt="Profile" className="h-full w-full object-cover" src="https://ui-avatars.com/api/?name=User&background=random" />
-             </div>
-           </div>
-        </div>
-      </header>
 
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
         {/* Hero Section */}
         <div className="relative mb-8 overflow-hidden rounded-xl bg-slate-200 shadow-xl lg:h-[450px]">
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent z-10"></div>
@@ -368,7 +289,7 @@ const RecipeDetailPage: React.FC = () => {
               <h3 className="text-2xl font-bold dark:text-white">Ratings & Comments</h3>
               <div className="mt-3 flex items-center gap-2">
                 {renderStars(recipe.rating || 0)}
-                <span className="font-bold dark:text-white">{recipe.rating || 0}</span>
+                <span className="font-bold dark:text-white">{recipe.totalReviews || 0}</span>
                 <span className="text-slate-500">({reviewsData?.content.length || 0} reviews)</span>
               </div>
             </div>
@@ -386,11 +307,14 @@ const RecipeDetailPage: React.FC = () => {
                       key={i}
                       type="button"
                       onClick={() => setReviewRating(i)}
-                      className={`text-2xl transition-colors ${
-                        i <= reviewRating ? 'text-orange-500' : 'text-slate-300'
+                      className={`text-2xl transition-colors cursor-pointer ${
+                        i <= reviewRating ? 'text-orange-500' : 'text-slate-300 hover:text-orange-300'
                       }`}
                     >
-                      <span className="material-symbols-outlined" style={{ fill: '1' }}>
+                      <span 
+                        className="material-symbols-outlined" 
+                        style={{ fill: i <= reviewRating ? '1' : '0' }}
+                      >
                         star
                       </span>
                     </button>

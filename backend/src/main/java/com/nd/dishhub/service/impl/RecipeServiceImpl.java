@@ -4,21 +4,22 @@ import com.nd.dishhub.DTO.request.IngredientQuantityRequest;
 import com.nd.dishhub.DTO.request.RecipeRequest;
 import com.nd.dishhub.DTO.response.NutritionResponse;
 import com.nd.dishhub.DTO.response.RecipeResponse;
+import com.nd.dishhub.DTO.response.RecipeIngredientResponse;
+import com.nd.dishhub.exception.IngredientNotFoundException;
 import com.nd.dishhub.exception.RecipeNotFoundException;
+import com.nd.dishhub.exception.ResourceNotFoundException;
 import com.nd.dishhub.model.IngredientEntity;
 import com.nd.dishhub.model.RecipeEntity;
 import com.nd.dishhub.model.RecipeIngredientEntity;
 import com.nd.dishhub.model.RecipeIngredientId;
 import com.nd.dishhub.model.UserEntity;
-import com.nd.dishhub.repository.IngredientRepository;
-import com.nd.dishhub.repository.RecipeIngredientRepository;
-import com.nd.dishhub.repository.RecipeRepository;
-import com.nd.dishhub.repository.UserRepository;
+import com.nd.dishhub.repository.*;
 import com.nd.dishhub.service.FileUploadService;
 import com.nd.dishhub.service.RecipeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,17 +27,20 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class RecipeServiceImpl implements RecipeService {
-
     private final RecipeRepository recipeRepository;
     private final UserRepository userRepository;
     private final IngredientRepository ingredientRepository;
     private final RecipeIngredientRepository recipeIngredientRepository;
     private final FileUploadService fileUploadService;
+    private final ReviewRepository reviewRepository;
 
     @Override
     public RecipeResponse create(RecipeRequest request, Long userId) {
@@ -115,7 +119,9 @@ public class RecipeServiceImpl implements RecipeService {
     public RecipeResponse getById(Long id) {
         RecipeEntity recipe = recipeRepository.findByIdWithAllRelationships(id)
                 .orElseThrow(() -> new RuntimeException("Recipe with ID " + id + " not found"));
-        return mapToResponse(recipe);
+        RecipeResponse response = mapToResponse(recipe);
+        response.setTotalReviews(reviewRepository.countByRecipeId(id));
+        return response;
     }
 
     @Override
@@ -189,19 +195,30 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
+    @Transactional
     public RecipeResponse updateRecipeIngredients(Long recipeId, List<IngredientQuantityRequest> newIngredients) {
         RecipeEntity recipe = recipeRepository.findByIdWithIngredients(recipeId)
                 .orElseThrow(() -> new RecipeNotFoundException("Recipe with ID " + recipeId + " not found"));
-
+        
+        //Get all ingredientId
+        List<Long> ingredientIds = newIngredients.stream()
+                .map(IngredientQuantityRequest::getIngredientId)
+                .toList();
+        
+        //Get all Ingredient
+        Map<Long, IngredientEntity> ingredientMap = ingredientRepository.findAllById(ingredientIds).stream()
+                .collect(Collectors.toMap(IngredientEntity::getId, Function.identity()));
+        
         // Clear existing ingredients
-        recipeIngredientRepository.deleteByRecipeId(recipeId);
         recipe.getRecipeIngredients().clear();
 
         // Add new ingredients
         for (IngredientQuantityRequest ingredientRequest : newIngredients) {
-            IngredientEntity ingredient = ingredientRepository.findById(ingredientRequest.getIngredientId())
-                    .orElseThrow(() -> new RuntimeException("Ingredient with ID " + ingredientRequest.getIngredientId() + " not found"));
-
+            IngredientEntity ingredient = ingredientMap.get(ingredientRequest.getIngredientId());
+            if (ingredient == null) {
+                throw new IngredientNotFoundException("Ingredient with ID " + ingredientRequest.getIngredientId() + " not found");
+            }
+            
             RecipeIngredientEntity recipeIngredient = RecipeIngredientEntity.builder()
                     .id(new RecipeIngredientId(recipeId, ingredientRequest.getIngredientId()))
                     .recipe(recipe)
@@ -209,17 +226,16 @@ public class RecipeServiceImpl implements RecipeService {
                     .quantity(ingredientRequest.getQuantity())
                     .unit(ingredientRequest.getUnit())
                     .build();
-
-            recipeIngredientRepository.save(recipeIngredient);
+            
             recipe.getRecipeIngredients().add(recipeIngredient);
         }
 
-        RecipeEntity updatedRecipe = recipeRepository.save(recipe);
+        RecipeEntity updatedRecipe = recipeRepository.saveAndFlush(recipe);
 
         // Trigger nutrition calculation
         calculateNutrition(recipeId);
-
-        return mapToResponse(recipeRepository.findByIdWithIngredients(recipeId).orElse(updatedRecipe));
+    
+        return mapToResponse(updatedRecipe);
     }
 
     @Override
@@ -281,53 +297,35 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     public Page<RecipeResponse> filterRecipes(String category, Integer maxCalories, String ingredients, Pageable pageable) {
-        // For simplicity, fetch recipes by category first, then filter in memory
-        Page<RecipeResponse> recipes;
-        
-        if (category != null && !category.isEmpty() && !"All".equals(category)) {
-            recipes = getRecipesByCategory(category, pageable);
-        } else {
-            recipes = recipeRepository.findByIsPublicTrue(pageable).map(this::mapToResponse);
-        }
-        
-        // Filter by maxCalories
-        if (maxCalories != null && maxCalories > 0) {
-            List<RecipeResponse> filtered = recipes.getContent().stream()
-                    .filter(r -> r.getNutrition() != null
-                            && r.getNutrition().getTotalCalories() != null
-                            && r.getNutrition().getTotalCalories() <= maxCalories)
-                    .toList();
-            return new org.springframework.data.domain.PageImpl<>(
-                    filtered,
-                    pageable,
-                    Math.min(filtered.size(), recipes.getTotalElements())
-            );
-        }
-        
-        // Filter by ingredients (simple search in title/description/tags)
-        if (ingredients != null && !ingredients.isEmpty()) {
-            String[] ingredientList = ingredients.split(",");
-            List<RecipeResponse> filtered = recipes.getContent().stream()
-                    .filter(r -> {
-                        String combined = (r.getTitle() + " " + r.getDescription() + " " + String.join(" ", r.getTags())).toLowerCase();
-                        return java.util.Arrays.stream(ingredientList)
-                                .map(String::trim)
-                                .anyMatch(combined::contains);
-                    })
-                    .toList();
-            return new org.springframework.data.domain.PageImpl<>(
-                    filtered, 
-                    pageable, 
-                    Math.min(filtered.size(), recipes.getTotalElements())
-            );
-        }
-        
-        return recipes;
+        Specification<RecipeEntity> spec = RecipeSpecification.filter(category, maxCalories, ingredients);
+        return recipeRepository.findAll(spec, pageable)
+                .map(this::mapToResponse);
     }
 
     @Override
     public String uploadRecipeImage(MultipartFile file) throws IOException {
         return fileUploadService.uploadFile(file);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<RecipeResponse> getMyRecipes(String email, Pageable pageable) {
+       
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User with email " + email + " not found"));
+        
+        return recipeRepository.findByUserId(user.getId(), pageable)
+                .map(this::mapToResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<RecipeResponse> getPublicRecipesByUser(Long targetUserId, Pageable pageable) {
+        if (!userRepository.existsById(targetUserId)) {
+            throw new ResourceNotFoundException("User with ID " + targetUserId + " not found");
+        }
+        return recipeRepository.findPublicRecipesByUser(targetUserId, pageable)
+                .map(this::mapToResponse);
     }
 
     private RecipeResponse mapToResponse(RecipeEntity recipe) {
@@ -339,29 +337,49 @@ public class RecipeServiceImpl implements RecipeService {
             ? List.of(recipe.getInstructions().split("\\|"))
             : List.of();
             
-        return RecipeResponse.builder()
-                .id(recipe.getId())
-                .title(recipe.getTitle())
-                .description(recipe.getDescription())
-                .image(recipe.getImageUrl())
-                .prepTime(recipe.getPrepTime())
-                .cookTime(recipe.getCookTime())
-                .servings(recipe.getServings())
-                .difficulty(recipe.getDifficulty())
-                .category(recipe.getCategory())
-                .tags(tags)
-                .instructions(instructions)
-                .isPublic(recipe.getIsPublic())
-                .userId(recipe.getUser() != null ? recipe.getUser().getId() : null)
-                .parentId(recipe.getParent() != null ? recipe.getParent().getId() : null)
-                .nutrition(NutritionResponse.builder()
-                        .totalCalories(recipe.getTotalCalories())
-                        .totalProtein(recipe.getTotalProtein())
-                        .totalFat(recipe.getTotalFat())
-                        .totalCarbs(recipe.getTotalCarbs())
-                        .build())
-                .createdAt(recipe.getCreatedAt())
-                .updatedAt(recipe.getUpdatedAt())
-                .build();
-    }
+        List<RecipeIngredientResponse> ingredients = recipe.getRecipeIngredients() != null && !recipe.getRecipeIngredients().isEmpty()
+            ? recipe.getRecipeIngredients().stream()
+                .filter(recipeIngredient -> recipeIngredient.getIngredient() != null)
+                .map(recipeIngredient -> RecipeIngredientResponse.builder()
+                    .id(recipeIngredient.getIngredient().getId())
+                    .name(recipeIngredient.getIngredient().getName())
+                    .quantity(recipeIngredient.getQuantity())
+                    .unit(recipeIngredient.getUnit())
+                    .build())
+                .collect(Collectors.toList())
+            : List.of();
+        
+        // Tính tổng số reviews và average rating
+        int totalReviews = reviewRepository.countByRecipeId(recipe.getId());
+        Double averageRating = reviewRepository.findAverageRatingByRecipeId(recipe.getId());
+            
+        RecipeResponse response = RecipeResponse.builder()
+                 .id(recipe.getId())
+                 .title(recipe.getTitle())
+                 .description(recipe.getDescription())
+                 .image(recipe.getImageUrl())
+                 .prepTime(recipe.getPrepTime())
+                 .cookTime(recipe.getCookTime())
+                 .servings(recipe.getServings())
+                 .difficulty(recipe.getDifficulty())
+                 .category(recipe.getCategory())
+                 .tags(tags)
+                 .instructions(instructions)
+                 .isPublic(recipe.getIsPublic())
+                 .userId(recipe.getUser() != null ? recipe.getUser().getId() : null)
+                 .parentId(recipe.getParent() != null ? recipe.getParent().getId() : null)
+                 .nutrition(NutritionResponse.builder()
+                         .totalCalories(recipe.getTotalCalories())
+                         .totalProtein(recipe.getTotalProtein())
+                         .totalFat(recipe.getTotalFat())
+                         .totalCarbs(recipe.getTotalCarbs())
+                         .build())
+                 .createdAt(recipe.getCreatedAt())
+                 .updatedAt(recipe.getUpdatedAt())
+                 .totalReviews(totalReviews)
+                 .averageRating(averageRating != null ? Math.round(averageRating * 10.0) / 10.0 : 0.0)
+                 .build();
+         response.setIngredients(ingredients);
+         return response;
+     }
 }

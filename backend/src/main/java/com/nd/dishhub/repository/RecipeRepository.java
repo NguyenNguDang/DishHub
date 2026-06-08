@@ -4,6 +4,7 @@ import com.nd.dishhub.model.RecipeEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -12,28 +13,19 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface RecipeRepository extends JpaRepository<RecipeEntity, Long> {
-
-    /**
-     * Tìm recipes theo user ID
-     */
-    List<RecipeEntity> findByUserId(Long userId);
-
+public interface RecipeRepository extends JpaRepository<RecipeEntity, Long>, JpaSpecificationExecutor<RecipeEntity> {
+    
     /**
      * Tìm recipes theo user ID với pagination
      */
-    Page<RecipeEntity> findByUserId(Long userId, Pageable pageable);
+    @Query("SELECT r FROM RecipeEntity r WHERE r.user.id = :userId")
+    Page<RecipeEntity> findByUserId(@Param("userId") Long userId, Pageable pageable);
 
     /**
      * Tìm public recipes
      */
     Page<RecipeEntity> findByIsPublicTrue(Pageable pageable);
-
-    /**
-     * Tìm recipes theo title (partial match)
-     */
-    List<RecipeEntity> findByTitleContaining(String title);
-
+    
     /**
      * Tìm recipe với tất cả ingredients
      */
@@ -72,20 +64,8 @@ public interface RecipeRepository extends JpaRepository<RecipeEntity, Long> {
      */
     @Query("SELECT r FROM RecipeEntity r WHERE r.user.id = :userId AND r.title LIKE %:title%")
     List<RecipeEntity> findByUserIdAndTitle(@Param("userId") Long userId, @Param("title") String title);
-
-    /**
-     * Tìm variations của một recipe
-     */
-    @Query("SELECT r FROM RecipeEntity r WHERE r.parent.id = :parentId")
-    List<RecipeEntity> findVariationsByParentId(@Param("parentId") Long parentId);
-
-    /**
-     * Tìm recipes có tag cụ thể
-     */
-    @Query("SELECT DISTINCT r FROM RecipeEntity r " +
-           "WHERE r.tags LIKE %:tagName% AND r.isPublic = true")
-    Page<RecipeEntity> findPublicRecipesByTag(@Param("tagName") String tagName, Pageable pageable);
-
+    
+    
     /**
      * Tìm recipes có rating cao
      */
@@ -115,4 +95,10 @@ public interface RecipeRepository extends JpaRepository<RecipeEntity, Long> {
      */
     @Query("SELECT r FROM RecipeEntity r WHERE r.isPublic = true AND r.category = :category")
     Page<RecipeEntity> findPublicRecipesByCategory(@Param("category") String category, Pageable pageable);
+
+    /**
+     * Tìm recipes public của một user
+     */
+    @Query("SELECT r FROM RecipeEntity r WHERE r.user.id = :userId AND r.isPublic = true")
+    Page<RecipeEntity> findPublicRecipesByUser(@Param("userId") Long userId, Pageable pageable);
 }

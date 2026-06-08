@@ -122,7 +122,7 @@ export const HomePage = () => {
                   <div className="flex gap-4 justify-center flex-wrap">
                     <Link
                       to="/recipes"
-                      className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                      className="px-6 py-2 bg-[#FF6900] text-white rounded-lg hover:bg-[#e55f00] transition-colors font-medium"
                     >
                       📖 Xem công thức
                     </Link>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { useGetShoppingList, useUpdateShoppingListItem, useShareShoppingList, useGenerateShoppingListFromWeek, useDeleteShoppingListItem, useAddShoppingListItem } from '../hooks/useShoppingListApi';
+import { useGetShoppingList, useUpdateShoppingListItem, useShareShoppingList, useGenerateShoppingListFromWeek, useDeleteShoppingListItem, useAddShoppingListItem } from '../hooks';
 import type { ShoppingListItem } from '../types';
 
 interface CategoryGroup {
@@ -22,7 +22,9 @@ const ShoppingListPage: React.FC = () => {
   const weekData = (() => {
     const today = new Date();
     const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay() + weekIndex * 7);
+    const dayOfWeek = today.getDay();
+    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    startOfWeek.setDate(today.getDate() - daysFromMonday + weekIndex * 7);
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
 
@@ -52,38 +54,14 @@ const ShoppingListPage: React.FC = () => {
   const deleteItemMutation = useDeleteShoppingListItem();
   const shareListMutation = useShareShoppingList();
 
-  // Fallback mock data khi không có API
-  const mockItems: ShoppingListItem[] = [
-    // Produce
-    { id: '1', name: 'Baby Spinach', quantity: 500, unit: 'g', category: 'Produce', isChecked: false, addedAt: new Date() },
-    { id: '2', name: 'Red Bell Peppers', quantity: 3, unit: 'units', category: 'Produce', isChecked: false, addedAt: new Date() },
-    { id: '3', name: 'Garlic Bulbs', quantity: 2, unit: 'units', category: 'Produce', isChecked: true, addedAt: new Date() },
-    { id: '4', name: 'Sweet Potatoes', quantity: 1.5, unit: 'kg', category: 'Produce', isChecked: false, addedAt: new Date() },
-    { id: '5', name: 'Red Onions', quantity: 4, unit: 'units', category: 'Produce', isChecked: false, addedAt: new Date() },
-
-    // Meat & Seafood
-    { id: '6', name: 'Chicken Breast', quantity: 800, unit: 'g', category: 'Meat & Seafood', isChecked: false, addedAt: new Date() },
-    { id: '7', name: 'Atlantic Salmon Fillets', quantity: 2, unit: 'units', category: 'Meat & Seafood', isChecked: false, addedAt: new Date() },
-    { id: '8', name: 'Lean Ground Beef', quantity: 1, unit: 'lb', category: 'Meat & Seafood', isChecked: false, addedAt: new Date() },
-
-    // Dairy & Eggs
-    { id: '9', name: 'Organic Large Eggs', quantity: 1, unit: 'dozen', category: 'Dairy & Eggs', isChecked: false, addedAt: new Date() },
-    { id: '10', name: 'Greek Yogurt', quantity: 500, unit: 'ml', category: 'Dairy & Eggs', isChecked: true, addedAt: new Date() },
-
-    // Pantry
-    { id: '11', name: 'Extra Virgin Olive Oil', quantity: 250, unit: 'ml', category: 'Pantry', isChecked: false, addedAt: new Date() },
-    { id: '12', name: 'Quinoa', quantity: 2, unit: 'cups', category: 'Pantry', isChecked: false, addedAt: new Date() },
-    { id: '13', name: 'Canned Chickpeas', quantity: 2, unit: 'tins', category: 'Pantry', isChecked: false, addedAt: new Date() },
-    { id: '14', name: 'Balsamic Vinegar', quantity: 1, unit: 'btl', category: 'Pantry', isChecked: false, addedAt: new Date() },
-  ];
 
   // Local state for optimistic updates
   const [localItems, setLocalItems] = useState<ShoppingListItem[]>([]);
 
-  // Use generated shopping list if available, otherwise use fetched or mock
-  const shoppingItems = localItems.length > 0 
-    ? localItems 
-    : (generatedShoppingList?.items || shoppingList?.items || mockItems);
+  // Use generated shopping list if available, otherwise use fetched or empty
+  const shoppingItems = localItems.length > 0
+    ? localItems
+    : (generatedShoppingList?.items || shoppingList?.items || []);
 
   // Category icons mapping
   const categoryIcons: Record<string, string> = {

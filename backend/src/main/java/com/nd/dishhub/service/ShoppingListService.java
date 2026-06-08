@@ -41,7 +41,7 @@ public class ShoppingListService {
      * Lấy shopping list cho tuần cụ thể
      */
     public ShoppingListResponse getShoppingListByWeek(String weekStart) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        String email = Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getName();
         UserEntity user = userRepository.findByEmail(email)
             .orElseThrow(() -> new RuntimeException("User not found"));
         

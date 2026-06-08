@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useGetRecipeById, useUpdateRecipe, useUploadRecipeImage } from '../hooks';
-import type { UpdateRecipeRequest } from '../types';
+import type { UpdateRecipeRequest, Ingredient } from '../types';
+import {IngredientList} from "../components/recipe/IngredientList.tsx";
 
 export const EditRecipePage = () => {
   const navigate = useNavigate();
@@ -29,11 +30,27 @@ export const EditRecipePage = () => {
     tags: [],
     ingredients: [],
     instructions: [],
+    isPublic: false,
   });
 
   // Populate form when recipe data is loaded
   useEffect(() => {
     if (recipe) {
+      // Normalize ingredients: backend may store ingredients as strings or objects
+      const normalizedIngredients: Ingredient[] = (recipe.ingredients || []).map((ing: unknown, idx: number) => {
+        if (typeof ing === 'string') {
+          return { id: `new-${idx}-${Date.now()}`, name: ing, quantity: 0, unit: '', note: '' } as Ingredient;
+        }
+        const obj = ing as Ingredient;
+        return {
+          id: obj.id ?? `new-${idx}-${Date.now()}`,
+          name: obj.name || '',
+          quantity: Number(obj.quantity ?? 0) || 0,
+          unit: obj.unit ?? '',
+          note: obj.note ?? '',
+        } as Ingredient;
+      });
+
       setFormData({
         title: recipe.title,
         description: recipe.description,
@@ -44,12 +61,50 @@ export const EditRecipePage = () => {
         difficulty: recipe.difficulty,
         category: recipe.category,
         tags: recipe.tags,
-        ingredients: recipe.ingredients,
+        ingredients: normalizedIngredients,
         instructions: recipe.instructions,
+        isPublic: recipe.isPublic ?? false,
       });
       setImagePreview(recipe.image);
     }
   }, [recipe]);
+
+  // Ingredient handlers
+  const handleAddIngredient = () => {
+    setFormData((prev) => ({
+      ...prev,
+      ingredients: [
+        ...(prev.ingredients || []),
+        { id: `new-${Date.now()}-${Math.random().toString(36).slice(2,8)}`, name: '', quantity: 0, unit: '', note: '' },
+      ],
+    }));
+  };
+
+  const handleRemoveIngredient = (index: number) => {
+    setFormData((prev) => {
+      const next = [...(prev.ingredients || [])];
+      next.splice(index, 1);
+      return { ...prev, ingredients: next };
+    });
+  };
+
+  const handleIngredientChange = (index: number, field: 'name' | 'quantity' | 'unit' | 'note', value: string | number) => {
+    setFormData((prev) => {
+      const next = [...(prev.ingredients || [])] as Ingredient[];
+      const item = { ...(next[index] || {}) } as Ingredient & { note?: string };
+      if (field === 'quantity') {
+        item.quantity = Number(value) || 0;
+      } else if (field === 'name') {
+        item.name = String(value);
+      } else if (field === 'unit') {
+        item.unit = String(value);
+      } else if (field === 'note') {
+        item.note = String(value);
+      }
+      next[index] = item as Ingredient;
+      return { ...prev, ingredients: next } as UpdateRecipeRequest;
+    });
+  };
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -372,6 +427,47 @@ export const EditRecipePage = () => {
             </div>
           </div>
 
+          {/* Ingredients */}
+            <IngredientList
+                ingredients={formData.ingredients}
+                onChange={handleIngredientChange}
+                onRemove={handleRemoveIngredient}
+                onAdd={handleAddIngredient}
+            />
+
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
+              Quyền riêng tư *
+            </label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                <input
+                  type="radio"
+                  name="isPublic"
+                  checked={!!formData.isPublic}
+                  onChange={() => setFormData({ ...formData, isPublic: true })}
+                  disabled={isLoading}
+                  className="h-4 w-4 text-orange-500 focus:ring-orange-500"
+                />
+                Public
+              </label>
+              <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                <input
+                  type="radio"
+                  name="isPublic"
+                  checked={!formData.isPublic}
+                  onChange={() => setFormData({ ...formData, isPublic: false })}
+                  disabled={isLoading}
+                  className="h-4 w-4 text-orange-500 focus:ring-orange-500"
+                />
+                Private
+              </label>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+              Public: hiển thị với cộng đồng, Private: chỉ bạn xem được.
+            </p>
+          </div>
+
           <div className="flex gap-4">
             <button
               type="submit"
@@ -409,4 +505,3 @@ export const EditRecipePage = () => {
 };
 
 export default EditRecipePage;
-
